@@ -1,7 +1,6 @@
 let s:dir = "/" . join(split(expand("<sfile>"), "/")[0:-2], "/")
 ruby $dir = VIM::evaluate('s:dir')
 ruby load File.join($dir, 'init.rb');
-"ruby load File.join($dir, 'puts.rb');
 
 "Load guard
 if ( exists('g:loaded_ctrlp_sample') && g:loaded_ctrlp_sample )
@@ -13,8 +12,8 @@ let g:loaded_ctrlp_sample = 1
 call add(g:ctrlp_ext_vars, {
 	\ 'init': 'sample#init()',
 	\ 'accept': 'sample#accept',
-	\ 'lname': 'ctrl-similar',
-	\ 'sname': 'shortname',
+	\ 'lname': 'ctrlp-similar',
+	\ 'sname': 'c-similar',
 	\ 'type': 'line',
 	\ 'enter': 'sample#enter()',
 	\ 'exit': 'sample#exit()',
@@ -24,9 +23,9 @@ call add(g:ctrlp_ext_vars, {
 	\ })
 
 
-let g:nice_string = ['11']
 function! sample#init()
-	return g:nice_string
+  ruby gen_sample_files
+	return s:ctrlp_similar_files
 endfunction
 
 
