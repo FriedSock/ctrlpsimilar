@@ -1,5 +1,5 @@
 require 'matrix.rb'
-require 'ruby-debug'
+#require 'ruby-debug'
 
 TEMP_FILENAME = '/tmp/commit_files'
 
@@ -7,7 +7,8 @@ def handle_type array
   return array.split.last
 end
 
-if __FILE__ == $0
+def main
+  output = []
   `#{File.join(File.dirname(__FILE__), "get_commit_files.sh" )} > #{TEMP_FILENAME}`
 
   raw = File.open(TEMP_FILENAME).read
@@ -45,11 +46,9 @@ if __FILE__ == $0
     end
   end
 
-  debugger
-
   filehash.each do |k, v|
     v[:vector] = Vector.[] *v[:vector]
-    puts v[:vector]
+    output << v[:vector]
   end
 
   filehash.each do |key, value|
@@ -64,9 +63,9 @@ if __FILE__ == $0
     end
     out.sort! { |x,y| y[2] <=> x[2]}
     out.each do |o|
-      puts o.join ' '
+      output << o.join(' ')
     end
-    puts ""
+    output << ""
   end
 
   #filehash.each do |k,v|
@@ -76,6 +75,11 @@ if __FILE__ == $0
 
   #`rm graph_file.html`
   #File.open('graph_file.html', 'w+') { |f| f.write html_file(filehash, links)}
+  output.join "\n"
 
+end
+
+if __FILE__ == $0
+  puts main
 end
 

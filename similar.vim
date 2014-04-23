@@ -3,7 +3,7 @@ ruby $dir = VIM::evaluate('s:dir')
 ruby load File.join($dir, 'init.rb');
 
 "Load guard
-if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_sample )
+if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
 	\ || v:version < 700 || &cp
 	finish
 endif
@@ -25,6 +25,8 @@ call add(g:ctrlp_ext_vars, {
 
 function! similar#init()
   ruby gen_similar_files
+  let s:buffer = ''
+
 	return s:ctrlp_similar_files
 endfunction
 
@@ -39,7 +41,8 @@ endfunction
 function! similar#accept(mode, str)
 	" For this example, just exit ctrlp and run help
 	call similar#exit()
-	echom a:str
+  "edit split(a:str)[0]
+  echom a:mode
 endfunction
 
 
@@ -66,6 +69,10 @@ function! similar#id()
 	return s:id
 endfunction
 
+function! SimilarWrapper()
+  let s:buffer = expand('%')
+  call ctrlp#init(similar#id())
+endfunction
 
 " Create a command to directly call the new search type
-command! CP call ctrlp#init(similar#id())
+command! CP call SimilarWrapper()
