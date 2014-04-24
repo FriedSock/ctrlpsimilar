@@ -75,4 +75,4 @@ function! SimilarWrapper()
 endfunction
 
 " Create a command to directly call the new search type
-command! CP call SimilarWrapper()
+command! CtrlPSimilar call SimilarWrapper()
