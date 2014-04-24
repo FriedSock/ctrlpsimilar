@@ -1,9 +1,20 @@
 require 'matrix.rb'
-#require 'ruby-debug'
+require 'ruby-debug'
 
 TEMP_FILENAME = '/tmp/commit_files'
 
 def handle_type array
+  words = array.split
+  if words.first =~ /M.*/
+    debugger
+    hello = 1
+  elsif words.first =~ /C.*/
+    debugger
+    hello = 2
+  elsif words.first =~ /R.*/
+    debugger
+    hello = 3
+  end
   return array.split.last
 end
 
@@ -35,6 +46,7 @@ def main
     filenames = files[1].split("\n")
 
     #TODO - rename detection
+    debugger
     filenames.map! { |f| handle_type f }
 
     vector = ('0'*(filehash.keys.length)).split('').map(&:to_i)
