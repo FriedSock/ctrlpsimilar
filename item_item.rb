@@ -1,22 +1,6 @@
-require 'matrix.rb'
-require 'ruby-debug'
+require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 
 TEMP_FILENAME = '/tmp/commit_files'
-
-def handle_type array
-  words = array.split
-  if words.first =~ /M.*/
-    debugger
-    hello = 1
-  elsif words.first =~ /C.*/
-    debugger
-    hello = 2
-  elsif words.first =~ /R.*/
-    debugger
-    hello = 3
-  end
-  return array.split.last
-end
 
 def main
   output = []
@@ -25,53 +9,35 @@ def main
   raw = File.open(TEMP_FILENAME).read
   `rm #{TEMP_FILENAME}`
 
+  commit_matrix = CommitMatrix.new
+
   commits = raw.split('----SEPERATOR----')
-  filehash = {}
   commits.each do |c|
     files = c.match(/files: (.*)/m)
-    next unless files
+    revision = c.match(/revision: (.*)/)
+    parents = `git rev-list --parents -n 1 #{revision[1]}`.split
     filenames = files[1].split("\n")
-    filenames.map!{ |f| handle_type f }
-    filenames.each do |filename|
-      unless filehash.keys.include? filename
-        filehash[filename] = { :id => filehash.length, :vector => [] }
-      end
+    puts revision
+    if parents.length > 2
+      #puts `git diff --name-status #{parents[2]} #{parents[1]}`
+      #puts files
+      #puts ''
+      filenames.each { |f| commit_matrix.handle_merge_file f }
+    else
+      filenames.each { |f| commit_matrix.handle_file f }
     end
+    commit_matrix.next_commit
   end
 
 
-  commits.each do |c|
-    files = c.match(/files: (.*)/m)
-    next unless files
-    filenames = files[1].split("\n")
-
-    #TODO - rename detection
-    debugger
-    filenames.map! { |f| handle_type f }
-
-    vector = ('0'*(filehash.keys.length)).split('').map(&:to_i)
-    filenames.each do |filename|
-      vector[filehash[filename][:id]] = 1
-    end
-    filehash.each do |k,v|
-      v[:vector] += [vector[v[:id]]]
-    end
-  end
-
-  filehash.each do |k, v|
-    v[:vector] = Vector.[] *v[:vector]
-    output << v[:vector]
-  end
-
-  filehash.each do |key, value|
+  filenames = commit_matrix.filenames_to_columns.keys
+  filenames.each do |filename1|
     out = []
-    filehash.each do |k, v|
-      name1 = key
-      name2 = k
-      v1 = value[:vector]
-      v2 = v[:vector]
+    filenames.each do |filename2|
+      v1 = commit_matrix.file_vector filename1
+      v2 = commit_matrix.file_vector filename2
       cos = v1.inner_product(v2) / (v1.r * v2.r)
-      out += [[name1, name2, cos]]
+      out += [[filename1, filename2, cos]]
     end
     out.sort! { |x,y| y[2] <=> x[2]}
     out.each do |o|
@@ -79,14 +45,6 @@ def main
     end
     output << ""
   end
-
-  #filehash.each do |k,v|
-  #  puts  "file: k"
-  #  puts "v"
-  #end
-
-  #`rm graph_file.html`
-  #File.open('graph_file.html', 'w+') { |f| f.write html_file(filehash, links)}
   output.join "\n"
 
 end

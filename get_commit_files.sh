@@ -12,7 +12,7 @@ function main {
 }
 
 function revisions {
-  git log --all --oneline | cut -d ' ' -f 1
+  git log --reverse --oneline --topo-order | cut -d ' ' -f 1
 }
 
 function long_hash {
@@ -20,7 +20,7 @@ function long_hash {
 }
 
 function files {
-  git diff-tree --no-commit-id -r -M --name-status --root $rev
+  git diff-tree --no-commit-id -r -M -c --name-status --root $rev
 }
 
 main
