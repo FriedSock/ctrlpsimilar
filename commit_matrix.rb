@@ -3,21 +3,31 @@ require 'matrix.rb'
 
 class CommitMatrix
 
-  attr_reader :filenames_to_columns
+  attr_reader :filenames_to_columns, :number_of_files, :commit_hash
+  attr_accessor :number_of_commits, :rows, :columns
 
-  def initialize
-    @columns = {}
-    @number_of_files = 0
-    @number_of_commits = 0
-    @filenames_to_columns = {}
+  def initialize hash, parent
+    @commit_hash = hash
+    if parent
+      @parent_hash = parent.commit_hash
+      @columns = Marshal.load(Marshal.dump(parent.columns))
+      @number_of_files = parent.number_of_files
+      @number_of_commits = parent.number_of_commits + 1
+      @filenames_to_columns = parent.filenames_to_columns.clone
+      @rows = parent.rows.clone << hash
+    else
+      @columns = {}
+      @number_of_files = 0
+      @number_of_commits = 1
+      @filenames_to_columns = {}
+      @parent_hash = nil
+      @rows = [] << hash
+    end
     @modset = []
     @archived_files = {}
   end
 
   def add_one_value_to filename
-    if not @columns[@filenames_to_columns[filename]]
-      puts filename
-    end
     @columns[@filenames_to_columns[filename]] << 1
     @modset << filename
   end
@@ -33,7 +43,7 @@ class CommitMatrix
 
   def create_new_file filename
     @filenames_to_columns[filename] = @number_of_files
-    @columns[@number_of_files] = Array.new(@number_of_commits).map(&:to_i)
+    @columns[@number_of_files] = Array.new(@number_of_commits-1).map(&:to_i)
     add_one_value_to filename
     @number_of_files += 1
   end
@@ -57,9 +67,6 @@ class CommitMatrix
 
   def handle_file file
     words = file.split
-    if words.last == 'surrogatemodel.py'
-      puts file
-    end
     if words.first =~ /M.*/
       add_one_value_to words.last
     elsif words.first =~ /A.*/
@@ -83,6 +90,41 @@ class CommitMatrix
     else
       #puts "oh no"
     end
+  end
+
+  #Merge 2 commits
+  def self.merge matrix1, matrix2, diff
+    matrix1 = Marshal.load(Marshal.dump(matrix1))
+    matrix2 = Marshal.load(Marshal.dump(matrix2))
+    diff.split("\n").each do |file|
+      #TODO: This method is a place for optimizations
+      words = file.split
+      if words.first =~ /R.*/
+        matrix2.rename_file words[-2], words[-1]
+        size = matrix2.columns[matrix2.filenames_to_columns[words[-1]]].size
+        matrix2.columns[matrix2.filenames_to_columns[words[-1]]].delete_at size-1
+      elsif words.first =~ /A.*/
+        #Need to be careful here
+        debugger
+        hello = 1
+      elsif words.first =~ /M.*/
+        #Don't need to do anything
+      elsif words.first =~ /D.*/
+        #Need to be careful here
+        debugger
+        hello = 1
+      end
+    end
+
+    most_recent_ancestor = `git merge-base #{[matrix1,matrix2].map{ |m| m.commit_hash }.join " "}`.chomp
+    slice_index = matrix2.rows.index(most_recent_ancestor) + 1
+
+    #Dollop rows from matrix2 ontop of matrix1
+    matrix1.rows += matrix2.rows[slice_index..-1]
+    matrix1.filenames_to_columns.each do |k,v|
+      matrix1.columns[v] += matrix2.columns[matrix2.filenames_to_columns[k]][slice_index..-1]
+    end
+    matrix1.number_of_commits = matrix1.rows.size
   end
 
 end

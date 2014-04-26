@@ -1,11 +1,10 @@
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
+require 'debugger'
 
 TEMP_FILENAME = '/tmp/commit_files'
 
 def main
   output = []
-  `#{File.join(File.dirname(__FILE__), "get_commit_files.sh" )} > #{TEMP_FILENAME}`
-
   raw = File.open(TEMP_FILENAME).read
   `rm #{TEMP_FILENAME}`
 
@@ -18,15 +17,6 @@ def main
     parents = `git rev-list --parents -n 1 #{revision[1]}`.split
     filenames = files[1].split("\n")
     puts revision
-    if parents.length > 2
-      #puts `git diff --name-status #{parents[2]} #{parents[1]}`
-      #puts files
-      #puts ''
-      filenames.each { |f| commit_matrix.handle_merge_file f }
-    else
-      filenames.each { |f| commit_matrix.handle_file f }
-    end
-    commit_matrix.next_commit
   end
 
 
@@ -49,7 +39,42 @@ def main
 
 end
 
+def build_matrix commit_hash, level
+  parents = `git rev-list --parents -n 1 #{commit_hash}`.split
+  puts "level: #{level}   parents: #{parents[1..-1]}"
+  if parents.size == 3
+    build_matrix parents[1], "#{level} left"
+    build_matrix parents[2], "#{level} right"
+    make_merge_matrix commit_hash, parents[1..2]
+  elsif parents.size == 2
+    build_matrix parents[1], level
+    make_hard_matrix commit_hash, $Commit_matrices[parents[1]]
+  else
+    make_hard_matrix commit_hash, nil
+  end
+end
+
+def make_merge_matrix commit_hash, parents
+  parent1 = $Commit_matrices[parents.first]
+  parent2 = $Commit_matrices[parents.last]
+  diff = `git diff -M --name-status #{parents.last} #{parents.first}`
+  $Commit_matrices[commit_hash] = CommitMatrix.merge parent1, parent2, diff
+end
+
+def make_hard_matrix commit_hash, parent
+  return if $Commit_matrices.has_key? commit_hash
+
+  commit_matrix = CommitMatrix.new commit_hash, parent
+  name_statuses = `git diff-tree --no-commit-id -r -M -c --name-status --root #{commit_hash}`
+  name_statuses.split("\n").each do |name_status|
+    commit_matrix.handle_file name_status
+  end
+  $Commit_matrices[commit_hash] = commit_matrix
+end
+
 if __FILE__ == $0
-  puts main
+  $Commit_matrices = {}
+  commit = `git rev-parse HEAD`
+  puts build_matrix commit, ''
 end
 
