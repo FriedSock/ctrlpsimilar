@@ -28,7 +28,6 @@ class CommitMatrix
   end
 
   def add_one_value_to filename
-    debugger if !@columns[@filenames_to_columns[filename]]
     @columns[@filenames_to_columns[filename]] << 1
   end
 
@@ -57,7 +56,6 @@ class CommitMatrix
   def delete_file filename
     column = @filenames_to_columns.delete filename
     columns.delete column
-    #@archived_files[filename] = column
   end
 
   def next_commit
@@ -65,10 +63,6 @@ class CommitMatrix
       add_zero_value_to key if columns[filenames_to_columns[key]].size < rows.size
     end
     @number_of_commits += 1
-    columns.each do |k,v|
-      debugger if v.size != rows.size
-      hello = 1
-    end
   end
 
   def file_vector filename
@@ -87,18 +81,7 @@ class CommitMatrix
       delete_file words.last
     else
       puts "something has gone horribly wrong"
-    end
-  end
-
-  #In the case of a merge, we just want to reinstate any additions (that were deleted on one branch)
-  def handle_merge_file file
-    words = file.split
-    puts file
-    if words.first =~ /A.*/
-      #puts "weeee"
-      #reinstate_file file
-    else
-      #puts "oh no"
+      exit(1)
     end
   end
 
@@ -115,11 +98,10 @@ class CommitMatrix
     diff.split("\n").each do |file|
       words = file.split
       if words.first =~ /R.*/
-        matrix2.rename_file words[-2], words[-1]
-        size = matrix2.columns[matrix2.filenames_to_columns[words[-1]]].size
-        matrix2.columns[matrix2.filenames_to_columns[words[-1]]].delete_at size-1
+        matrix1.rename_file words[-2], words[-1]
+        size = matrix1.columns[matrix1.filenames_to_columns[words[-1]]].size
+        matrix1.columns[matrix1.filenames_to_columns[words[-1]]].delete_at size-1
       elsif words.first =~ /A.*/
-        #new_file_columns = matrix2.columns[matrix2.filenames_to_columns[words.last]]
         matrix1.create_new_file_with_history words.last
       elsif words.first =~ /M.*/
         #Don't need to do anything
