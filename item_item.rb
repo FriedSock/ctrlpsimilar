@@ -44,9 +44,8 @@ def build_matrix commit_hash, level
   if parents.size == 3
     build_matrix parents[1], "#{level} left" if !$Commit_matrices.has_key? parents[1]
     build_matrix parents[2], "#{level} right" if !$Commit_matrices.has_key? parents[2]
+    debugger if commit_hash == '626cb86720702582f6c0cee3b226d2496518e5b3'
     make_merge_matrix commit_hash, parents[1..2]
-    debugger if commit_hash == "538946039f9b82dbcfc54eacee637e47f75f9966"
-    hello = 1
   elsif parents.size == 2
     build_matrix parents[1], level if !$Commit_matrices.has_key? parents[1]
     make_hard_matrix commit_hash, $Commit_matrices[parents[1]] if !$Commit_matrices.has_key? commit_hash

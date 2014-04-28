@@ -4,19 +4,17 @@ require File.join(File.dirname(__FILE__), 'object.rb')
 
 class CommitMatrix
 
-  attr_reader :filenames_to_columns, :number_of_files, :commit_hash
-  attr_accessor :number_of_commits, :rows, :columns
+  attr_reader :filenames_to_columns, :number_of_files
+  attr_accessor :number_of_commits, :rows, :columns, :commit_hash
 
   def initialize hash, parent
     @commit_hash = hash
     if parent
       @parent_hash = parent.commit_hash
-      puts 'prof'
-      @columns = parent.columns.deep_clone
-      puts 'profddd'
+      @columns = Marshal.load(Marshal.dump(parent.columns))
       @number_of_files = parent.number_of_files
       @number_of_commits = parent.number_of_commits
-      @filenames_to_columns = parent.filenames_to_columns.clone
+      @filenames_to_columns = Marshal.load(Marshal.dump(parent.filenames_to_columns))
       @rows = parent.rows.clone << hash
     else
       @columns = {}
@@ -26,13 +24,12 @@ class CommitMatrix
       @parent_hash = nil
       @rows = [] << hash
     end
-    @modset = []
     @archived_files = {}
   end
 
   def add_one_value_to filename
+    debugger if !@columns[@filenames_to_columns[filename]]
     @columns[@filenames_to_columns[filename]] << 1
-    @modset << filename
   end
 
   def add_zero_value_to filename
@@ -51,13 +48,9 @@ class CommitMatrix
     @number_of_files += 1
   end
 
-  #Insert a bunch of zeros into the recieved column for each of the differing commits
-  def create_new_file_with_history filename, column, zero_insert_range
+  def create_new_file_with_history filename
     @filenames_to_columns[filename] = @number_of_files
-    start, finish = *zero_insert_range
-    @columns[@number_of_files] = column[0..start-1] +
-                                 Array.new(finish-start+1).map(&:to_i) +
-                                 column[start..-1]
+    @columns[@number_of_files] = Array.new(rows.size).map(&:to_i)
     @number_of_files += 1
   end
 
@@ -69,10 +62,13 @@ class CommitMatrix
 
   def next_commit
     @filenames_to_columns.keys.each do |key|
-      add_zero_value_to key unless @modset.include? key
+      add_zero_value_to key if columns[filenames_to_columns[key]].size < rows.size
     end
-    @modset = []
     @number_of_commits += 1
+    columns.each do |k,v|
+      debugger if v.size != rows.size
+      hello = 1
+    end
   end
 
   def file_vector filename
@@ -108,51 +104,40 @@ class CommitMatrix
 
   #Merge 2 commits
   def self.merge matrix1, matrix2, diff, commit_hash
-    matrix1 = matrix1.deep_clone
-    matrix2 = matrix2.deep_clone
+    matrix1 = Marshal.load(Marshal.dump(matrix1))
+    matrix2 = Marshal.load(Marshal.dump(matrix2))
 
     most_recent_ancestor = `git merge-base #{[matrix1,matrix2].map{ |m| m.commit_hash }.join " "}`.chomp
-    debugger if !matrix2.rows.index(most_recent_ancestor)
-
     slice_index = matrix2.rows.index(most_recent_ancestor) + 1
 
     size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
 
-    puts 'boooo'
-
     diff.split("\n").each do |file|
-      #TODO: This method is a place for optimizations
       words = file.split
       if words.first =~ /R.*/
         matrix2.rename_file words[-2], words[-1]
         size = matrix2.columns[matrix2.filenames_to_columns[words[-1]]].size
         matrix2.columns[matrix2.filenames_to_columns[words[-1]]].delete_at size-1
       elsif words.first =~ /A.*/
-        new_file_columns = matrix2.columns[matrix2.filenames_to_columns[words.last]]
-        matrix1.create_new_file_with_history words.last, new_file_columns, [slice_index, slice_index+size_of_matrix1_diff-1]
+        #new_file_columns = matrix2.columns[matrix2.filenames_to_columns[words.last]]
+        matrix1.create_new_file_with_history words.last
       elsif words.first =~ /M.*/
         #Don't need to do anything
       elsif words.first =~ /D.*/
-        #Need to be careful here
         matrix1.delete_file words.last
       end
     end
 
-    #WHOLE THING A MESS
-    debugger
     if matrix1.rows.index(most_recent_ancestor) != matrix2.rows.index(most_recent_ancestor)
       #The history is differing, and the 2 lists of rows need merging
       mash_lists matrix1, matrix2, :end_at => most_recent_ancestor
     end
-    puts commit_hash
 
     #Dollop rows from matrix2 ontop of matrix1
     matrix1.rows += matrix2.rows[slice_index..-1]
     matrix1.filenames_to_columns.each do |k,v|
+      next unless matrix1.columns[v].size < matrix1.rows.size
       if matrix2.filenames_to_columns.has_key? k
-        if v.size < matrix1.rows.size
-          debugger
-        end
         thing = matrix2.columns[matrix2.filenames_to_columns[k]]
         slicething = thing[slice_index..-1]
         matrix1.columns[v].concat slicething
@@ -162,19 +147,17 @@ class CommitMatrix
     end
     matrix1.number_of_commits = matrix1.rows.size
     matrix1.rows << commit_hash
+    matrix1.commit_hash = commit_hash
     matrix1.next_commit
-
-    matrix1.columns.each do |k,v|
-      puts v.size
-      debugger if v.size != matrix1.rows.size
-      hello = 1
-    end
-
     matrix1
   end
 
   #precondition, the lists will have the same base and the same end
+  #Essentially, take everything in matrix2 that is not in matrix1, and
+  #shove it in. (before the specified point -- the most recent common
+  #ancestor)
   def self.mash_lists matrix1, matrix2, opts={}
+    return if opts[:end_at] == matrix1.rows.first
     i1 = 0
     i2 = 0
     list1 = matrix1.rows
