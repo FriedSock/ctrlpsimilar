@@ -39,13 +39,14 @@ end
 
 def build_matrix commit_hash
   parents = `git rev-list --parents -n 1 #{commit_hash}`.split
+  return if retrieve_matrix commit_hash
   if parents.size == 3
-    build_matrix parents[1] if !$Commit_matrices.has_key? parents[1]
-    build_matrix parents[2] if !$Commit_matrices.has_key? parents[2]
+    build_matrix parents[1] if !retrieve_matrix parents[1]
+    build_matrix parents[2] if !retrieve_matrix parents[2]
     make_merge_matrix commit_hash, parents[1..2]
   elsif parents.size == 2
-    build_matrix parents[1] if !$Commit_matrices.has_key? parents[1]
-    make_hard_matrix commit_hash, $Commit_matrices[parents[1]] if !$Commit_matrices.has_key? commit_hash
+    build_matrix parents[1] if !retrieve_matrix parents[1]
+    make_hard_matrix commit_hash, $Commit_matrices[parents[1]]
   else
     make_hard_matrix commit_hash, nil
   end
@@ -72,8 +73,23 @@ def make_hard_matrix commit_hash, parent
   cache_commit commit_hash, commit_matrix
 end
 
+def retrieve_matrix hash
+  return $Commit_matrices[hash] if $Commit_matrices.has_key? hash
+  filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{hash}"
+  if Pathname.new(filename).exist?
+    file = File.open(filename, 'rb')
+    serialized_matrix = file.read
+    commit_matrix = Marshal.load serialized_matrix
+    $Commit_matrices[hash] = commit_matrix
+    return commit_matrix
+  else
+    return nil
+  end
+end
+
 def cache_commit hash, commit_matrix
   $Commit_matrices[hash] = commit_matrix
+  write_to_cache_file commit_matrix
   print_and_flush '.'
 end
 
@@ -82,11 +98,27 @@ def print_and_flush(str)
     $stdout.flush
 end
 
+FOLDER_NAME = '.ctrlp-similar'
+GIT_ROOT = `git rev-parse --show-toplevel`.chomp
+def write_to_cache_file commit_matrix
+  filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{commit_matrix.commit_hash}"
+  return if Pathname.new(filename).exist?
+  serialized_matrix = Marshal.dump(commit_matrix)
+  File.open(filename, 'w') { |f| f.write serialized_matrix}
+end
+
+def make_cache_folder_if_not_exists
+  `mkdir -p #{GIT_ROOT}/#{FOLDER_NAME}`
+end
+
 if __FILE__ == $0
+  make_cache_folder_if_not_exists
   $Commit_matrices = {}
   start = Time.new
   commit = `git rev-parse HEAD`
+
   build_matrix commit
+
   total_time = Time.new - start
   puts ''
   utf8 = lambda { |s| s.gsub(/\\u[\da-f]{4}/i) { |m| [m[-4..-1].to_i(16)].pack('U') }}
