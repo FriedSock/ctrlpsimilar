@@ -34,7 +34,6 @@ if __FILE__ == $0
       prediction_hash[k] = predictor.predict[k] if predictor.predict[k]
     end
     prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
-    debugger if commit_hash == "751f48f634e015b4e4c0580fdd0e70356cfe88bc"
     next if prediction_hash.empty?
     actual_value = lambda { |f| return observation[f] || 0 }
     puts "Hash: #{commit_hash}"

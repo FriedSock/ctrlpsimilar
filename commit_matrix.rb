@@ -78,6 +78,8 @@ class CommitMatrix
       add_one_value_to words.last
     elsif words.first =~ /A.*/
       create_new_file words.last
+      @columns[@filenames_to_columns[words.last]].pop
+      add_one_value_to words.last
     elsif words.first =~ /R.*/
       rename_file words[-2], words.last
     elsif words.first =~ /D.*/
@@ -113,15 +115,11 @@ class CommitMatrix
       end
     end
 
-    if matrix1.rows.index(most_recent_ancestor) != matrix2.rows.index(most_recent_ancestor)
-      #The history is differing, and the 2 lists of rows need merging
-      mash_lists matrix1, matrix2, :end_at => most_recent_ancestor
-    end
+    mash_lists matrix1, matrix2, :end_at => most_recent_ancestor
 
     #Dollop rows from matrix2 ontop of matrix1
     matrix1.rows += matrix2.rows[slice_index..-1]
     matrix1.filenames_to_columns.each do |k,v|
-      next unless matrix1.columns[v].size < matrix1.rows.size
       if matrix2.filenames_to_columns.has_key? k
         thing = matrix2.columns[matrix2.filenames_to_columns[k]]
         slicething = thing[slice_index..-1]
@@ -164,7 +162,7 @@ class CommitMatrix
         end
       end
       i1 += 1
-      i2 += 0
+      i2 += 1
       return list1 if opts[:end_at] && opts[:end_at] == item
     end
     list1

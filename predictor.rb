@@ -28,8 +28,6 @@ class Predictor
   def file_similarity file1, file2
     v1 = @commit_matrix.file_vector file1
     v2 = @commit_matrix.file_vector file2
-    debugger if v1.size != v2.size
-    debugger if @commit_matrix.commit_hash == "751f48f634e015b4e4c0580fdd0e70356cfe88bc" && file2 =~ /fitnessTemp.*/
     return v1.inner_product(v2) / (v1.r * v2.r)
   end
 
