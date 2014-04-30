@@ -1,6 +1,5 @@
 require 'matrix.rb'
 require 'debugger'
-require File.join(File.dirname(__FILE__), 'object.rb')
 
 class CommitMatrix
 
@@ -25,6 +24,10 @@ class CommitMatrix
       @rows = [] << hash
     end
     @archived_files = {}
+  end
+
+  def filenames
+    @filenames_to_columns.keys
   end
 
   def add_one_value_to filename

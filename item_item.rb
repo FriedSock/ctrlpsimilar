@@ -1,3 +1,4 @@
+require 'pathname.rb'
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 
 TEMP_FILENAME = '/tmp/commit_files'
@@ -100,6 +101,8 @@ end
 
 FOLDER_NAME = '.ctrlp-similar'
 GIT_ROOT = `git rev-parse --show-toplevel`.chomp
+$Commit_matrices = {}
+
 def write_to_cache_file commit_matrix
   filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{commit_matrix.commit_hash}"
   return if Pathname.new(filename).exist?
@@ -113,9 +116,8 @@ end
 
 if __FILE__ == $0
   make_cache_folder_if_not_exists
-  $Commit_matrices = {}
   start = Time.new
-  commit = `git rev-parse HEAD`
+  commit = `git rev-parse HEAD`.chomp
 
   build_matrix commit
 
