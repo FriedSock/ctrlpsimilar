@@ -21,6 +21,7 @@ if __FILE__ == $0
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
   evaluated_commits = 0
   mae_sum = 0
+  mse_sum = 0
   commits.each do |commit_hash|
     commit_matrix = retrieve_matrix commit_hash
     next if !commit_matrix || is_merge_commit?(commit_hash)
@@ -37,13 +38,17 @@ if __FILE__ == $0
     next if prediction_hash.empty?
     actual_value = lambda { |f| return observation[f] || 0 }
     puts "Hash: #{commit_hash}"
-    mae = prediction_hash.map { |k,v| v - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size
-    evaluated_commits +=1
+    mae = prediction_hash.map { |k,v| k - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
+    mse = prediction_hash.map { |k,v| k - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
+    evaluated_commits +=1 if mae > 0
     mae_sum += mae
+    mse_sum += mse
     puts "MAE: #{mae}"
+    puts "MSE: #{mse}"
     puts ""
   end
   puts ""
   puts "mean MAE: #{mae_sum / evaluated_commits}"
+  puts "mean MSE: #{mse_sum / evaluated_commits}"
 end
 
