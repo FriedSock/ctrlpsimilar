@@ -22,6 +22,8 @@ if __FILE__ == $0
   evaluated_commits = 0
   mae_sum = 0
   mse_sum = 0
+  positive_mse_sum = 0
+  pos_evaluated_commits = 0
   commits.each do |commit_hash|
     commit_matrix = retrieve_matrix commit_hash
     next if !commit_matrix || is_merge_commit?(commit_hash)
@@ -38,8 +40,16 @@ if __FILE__ == $0
     next if prediction_hash.empty?
     actual_value = lambda { |f| return observation[f] || 0 }
     puts "Hash: #{commit_hash}"
-    mae = prediction_hash.map { |k,v| k - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
-    mse = prediction_hash.map { |k,v| k - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
+    mae = prediction_hash.map { |k,v| v - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
+    mse = prediction_hash.map { |k,v| v - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
+    positive_mse = prediction_hash.map { |k,v| actual_value.call(k) == 1 ? v - 1 : nil}.compact
+    if !positive_mse.empty?
+      positive_mse.map! { |n| n**2 }
+      positive_mse = positive_mse.reduce(:+) / positive_mse.size.to_f
+      puts "Positive MSE #{positive_mse}"
+      pos_evaluated_commits += 1
+      positive_mse_sum += positive_mse
+    end
     evaluated_commits +=1 if mae > 0
     mae_sum += mae
     mse_sum += mse
@@ -50,5 +60,6 @@ if __FILE__ == $0
   puts ""
   puts "mean MAE: #{mae_sum / evaluated_commits}"
   puts "mean MSE: #{mse_sum / evaluated_commits}"
+  puts "mean Positive MSE: #{positive_mse_sum / pos_evaluated_commits}"
 end
 
