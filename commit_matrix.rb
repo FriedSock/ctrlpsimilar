@@ -10,18 +10,16 @@ class CommitMatrix
     @commit_hash = hash
     if parent
       @parent_hash = parent.commit_hash
-      @columns = Marshal.load(Marshal.dump(parent.columns))
       @number_of_files = parent.number_of_files
       @number_of_commits = parent.number_of_commits
       @filenames_to_columns = Marshal.load(Marshal.dump(parent.filenames_to_columns))
-      @rows = parent.rows.clone << hash
+      @rows = parent.rows.clone.tap { |rows| rows[hash] = [] }
     else
-      @columns = {}
       @number_of_files = 0
       @number_of_commits = 0
       @filenames_to_columns = {}
       @parent_hash = nil
-      @rows = [] << hash
+      @rows = {hash => []}
     end
     @archived_files = {}
   end
@@ -31,7 +29,7 @@ class CommitMatrix
   end
 
   def add_one_value_to filename
-    @columns[@filenames_to_columns[filename]] << @commit_hash
+    @rows[@commit_hash] << @filenames_to_columns[filename]
   end
 
   def rename_file oldfilename, newfilename
@@ -41,20 +39,20 @@ class CommitMatrix
 
   def create_new_file filename
     @filenames_to_columns[filename] = @number_of_files
-    @columns[@number_of_files] = []
     add_one_value_to filename
     @number_of_files += 1
   end
 
   def create_new_file_with_history filename
     @filenames_to_columns[filename] = @number_of_files
-    @columns[@number_of_files] = Array.new(rows.size).map(&:to_i)
+    #@columns[@number_of_files] = Array.new(rows.size).map(&:to_i)
+    @columns[@number_of_files] = []
     @number_of_files += 1
   end
 
   def delete_file filename
     column = @filenames_to_columns.delete filename
-    columns.delete column
+    #columns.delete column
   end
 
   def next_commit
@@ -62,10 +60,10 @@ class CommitMatrix
   end
 
   def file_vector filename
-    #Vector.[] *@columns[@filenames_to_columns[filename]]
     arr = []
     @rows.each do |r|
-      arr << (@columns[@filenames_to_columns[filename]].include?(r) ? 1 : 0)
+      col = @filenames_to_columns[filename]
+      arr << (r.last.include?(col) ? 1 : 0)
     end
     Vector.[] *arr
   end
@@ -76,8 +74,6 @@ class CommitMatrix
       add_one_value_to words.last
     elsif words.first =~ /A.*/
       create_new_file words.last
-      @columns[@filenames_to_columns[words.last]].pop
-      add_one_value_to words.last
     elsif words.first =~ /R.*/
       rename_file words[-2], words.last
     elsif words.first =~ /D.*/
@@ -116,16 +112,18 @@ class CommitMatrix
     mash_lists matrix1, matrix2, :end_at => most_recent_ancestor
 
     #Dollop rows from matrix2 ontop of matrix1
-    matrix1.rows += matrix2.rows[slice_index..-1]
+    puts 'slow'
     matrix1.filenames_to_columns.each do |k,v|
       if matrix2.filenames_to_columns.has_key? k
-        thing = matrix2.columns[matrix2.filenames_to_columns[k]]
-        slicething = thing[slice_index..-1]
-        matrix1.columns[v].concat slicething
+        new_values = matrix2.columns[matrix2.filenames_to_columns[k]].select do |k,v|
+          matrix1.rows.index { |hash| hash == k }
+        end
+        matrix1.columns[v].concat new_values
       else
-        matrix1.columns[v].concat Array.new(matrix2.number_of_commits-slice_index).map(&:to_i)
+        #matrix1.columns[v].concat Array.new(matrix2.number_of_commits-slice_index).map(&:to_i)
       end
     end
+    matrix1.rows += matrix2.rows[slice_index..-1]
     matrix1.number_of_commits = matrix1.rows.size
     matrix1.rows << commit_hash
     matrix1.commit_hash = commit_hash
@@ -139,7 +137,6 @@ class CommitMatrix
   #ancestor)
   def self.mash_lists matrix1, matrix2, opts={}
     return if opts[:end_at] == matrix1.rows.first
-    debugger
     i1 = 0
     i2 = 0
     list1 = matrix1.rows
