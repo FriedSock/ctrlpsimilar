@@ -26,9 +26,19 @@ class Predictor
   end
 
   def file_similarity file1, file2
-    v1 = @commit_matrix.file_vector file1
-    v2 = @commit_matrix.file_vector file2
-    return v1.inner_product(v2) / (v1.r * v2.r)
+    #v1 = @commit_matrix.file_vector file1
+    #v2 = @commit_matrix.file_vector file2
+    return inner_prod(file1, file2) / (size(file1) * size(file2))
+  end
+
+  def inner_prod file1, file2
+    vec1 = @commit_matrix.file file1
+    vec2 = @commit_matrix.file file2
+    vec1.map { |r| vec2.include?(r) ? 1 : 0 }.reduce(:+)
+  end
+
+  def size file
+    Math.sqrt(@commit_matrix.file(file).size)
   end
 
 end

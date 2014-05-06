@@ -1,5 +1,6 @@
 require 'matrix.rb'
 require 'debugger'
+require 'set.rb'
 
 class CommitMatrix
 
@@ -7,19 +8,22 @@ class CommitMatrix
   attr_accessor :number_of_commits, :rows, :columns, :commit_hash
 
   def initialize hash, parent
+    @file_vector_cache = {}
     @commit_hash = hash
     if parent
       @parent_hash = parent.commit_hash
       @number_of_files = parent.number_of_files
       @number_of_commits = parent.number_of_commits
+      @columns = Marshal.load(Marshal.dump(parent.columns))
       @filenames_to_columns = Marshal.load(Marshal.dump(parent.filenames_to_columns))
-      @rows = parent.rows.clone.tap { |rows| rows[hash] = [] }
+      @rows = Marshal.load(Marshal.dump(parent.rows)).add hash
     else
       @number_of_files = 0
       @number_of_commits = 0
       @filenames_to_columns = {}
       @parent_hash = nil
-      @rows = {hash => []}
+      @columns = {}
+      @rows = Set.new.add hash
     end
     @archived_files = {}
   end
@@ -29,7 +33,7 @@ class CommitMatrix
   end
 
   def add_one_value_to filename
-    @rows[@commit_hash] << @filenames_to_columns[filename]
+    @columns[@filenames_to_columns[filename]].add @commit_hash
   end
 
   def rename_file oldfilename, newfilename
@@ -39,6 +43,7 @@ class CommitMatrix
 
   def create_new_file filename
     @filenames_to_columns[filename] = @number_of_files
+    @columns[@number_of_files] = Set.new
     add_one_value_to filename
     @number_of_files += 1
   end
@@ -57,13 +62,8 @@ class CommitMatrix
     @number_of_commits += 1
   end
 
-  def file_vector filename
-    arr = []
-    @rows.each do |r|
-      col = @filenames_to_columns[filename]
-      arr << (r.last.include?(col) ? 1 : 0)
-    end
-    Vector.[] *arr
+  def file filename
+    @columns[@filenames_to_columns[filename]]
   end
 
   def handle_file file
@@ -91,18 +91,19 @@ class CommitMatrix
 
     size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
 
-    new_commits = matrix2.rows.select { |k,v| !matrix1.rows.keys.include? k }.keys
-    matrix1.rows = matrix2.rows.merge matrix1.rows
-    #for renames and additions we need to go through the whole set of 'new' commits and convert the old column values
-    #to the new ones.
+    new_commits = matrix2.rows - matrix1.rows
+    matrix1.rows = matrix1.rows | matrix2.rows
+
     renamed_files = []
     diff.split("\n").each do |file|
       words = file.split
       if words.first =~ /R.*/
         matrix1.rename_file words[-2], words[-1]
+        matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-1])
         #Not sure about this..
       elsif words.first =~ /A.*/
         matrix1.create_new_file_with_history words.last
+        matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix2.file(words.last)
         renamed_files << words.last
       elsif words.first =~ /M.*/
         #Don't need to do anything
@@ -111,22 +112,8 @@ class CommitMatrix
       end
     end
 
-    new_commits.each do |hash|
-      new_list = []
-      renamed_files.each do |filename|
-        col = matrix1.filenames_to_columns[filename]
-        old_col = matrix2.filenames_to_columns[filename]
-        list = matrix1.rows[hash]
-        if list.include? old_col
-          list.delete old_col
-          new_list << col
-        end
-        matrix1.rows[hash] = list + new_list
-      end
-    end
-
     matrix1.number_of_commits = matrix1.rows.size
-    matrix1.rows[commit_hash] = []
+    matrix1.rows.add commit_hash
     matrix1.commit_hash = commit_hash
     matrix1.next_commit
     matrix1
