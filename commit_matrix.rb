@@ -31,11 +31,7 @@ class CommitMatrix
   end
 
   def add_one_value_to filename
-    @columns[@filenames_to_columns[filename]] << 1
-  end
-
-  def add_zero_value_to filename
-    @columns[@filenames_to_columns[filename]] << 0
+    @columns[@filenames_to_columns[filename]] << @commit_hash
   end
 
   def rename_file oldfilename, newfilename
@@ -45,7 +41,7 @@ class CommitMatrix
 
   def create_new_file filename
     @filenames_to_columns[filename] = @number_of_files
-    @columns[@number_of_files] = Array.new(@number_of_commits).map(&:to_i)
+    @columns[@number_of_files] = []
     add_one_value_to filename
     @number_of_files += 1
   end
@@ -62,14 +58,16 @@ class CommitMatrix
   end
 
   def next_commit
-    @filenames_to_columns.keys.each do |key|
-      add_zero_value_to key if columns[filenames_to_columns[key]].size < rows.size
-    end
     @number_of_commits += 1
   end
 
   def file_vector filename
-    Vector.[] *@columns[@filenames_to_columns[filename]]
+    #Vector.[] *@columns[@filenames_to_columns[filename]]
+    arr = []
+    @rows.each do |r|
+      arr << (@columns[@filenames_to_columns[filename]].include?(r) ? 1 : 0)
+    end
+    Vector.[] *arr
   end
 
   def handle_file file
@@ -141,6 +139,7 @@ class CommitMatrix
   #ancestor)
   def self.mash_lists matrix1, matrix2, opts={}
     return if opts[:end_at] == matrix1.rows.first
+    debugger
     i1 = 0
     i2 = 0
     list1 = matrix1.rows
