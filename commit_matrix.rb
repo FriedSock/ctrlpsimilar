@@ -68,7 +68,7 @@ class CommitMatrix
 
   def handle_file file
     words = file.split
-    if words.first =~ /M.*/
+    if words.first =~ /M|T.*/
       add_one_value_to words.last
     elsif words.first =~ /A.*/
       create_new_file words.last
@@ -77,6 +77,7 @@ class CommitMatrix
     elsif words.first =~ /D.*/
       delete_file words.last
     else
+      debugger
       puts "something has gone horribly wrong"
       exit(1)
     end
