@@ -56,7 +56,7 @@ if __FILE__ == $0
       pos_evaluated_commits += 1
       positive_mse_sum += positive_mse
     end
-    all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|_,v| v > 0.5}
+    all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0.5}
 
     evaluated_commits +=1 if mae > 0
     mae_sum += mae
@@ -78,8 +78,10 @@ if __FILE__ == $0
     normalized_points.each do |np|
       csv << np
     end
-    csv << [1,1]
   end
+
+  area_sum = 0
+  normalized_points.each_cons(2) { |first, second| area_sum += ((second[0] - first[0]) * second[1]) }
 
    plotcommandpath = File.join(File.dirname(__FILE__), 'plotcommands.gp')
   `gnuplot #{plotcommandpath}`
@@ -88,5 +90,6 @@ if __FILE__ == $0
   puts "mean MAE: #{mae_sum / evaluated_commits}"
   puts "mean MSE: #{mse_sum / evaluated_commits}"
   puts "mean Positive MSE: #{positive_mse_sum / pos_evaluated_commits}"
+  puts "Swets' a measure: #{area_sum}"
 end
 

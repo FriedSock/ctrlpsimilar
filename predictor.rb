@@ -21,6 +21,7 @@ class Predictor
         return_hash[repo_filename] += file_similarity(observed_filename, repo_filename) / @observation.size
       end
     end
+    #return_hash.each do |k,v| return_hash[k] = v + ((1-v)/3) end
     #exlude the filenames that *are* in the obseration -- we know they are 1
     return_hash.select { |k,v| !@observation.has_key? k }
   end
