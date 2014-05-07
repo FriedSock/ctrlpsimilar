@@ -26,7 +26,6 @@ if __FILE__ == $0
   positive_mse_sum = 0
   pos_evaluated_commits = 0
 
-
   all_predictions = []
 
   commits.each do |commit_hash|
@@ -79,6 +78,17 @@ if __FILE__ == $0
       csv << np
     end
   end
+
+  #found = Set.new
+  #remove_dups = lambda do |p|
+  #  if found.include? p[0]
+  #    return nil
+  #  else
+  #    found.add p[0]
+  #    return p
+  #  end
+  #end
+  #normalized_points = normalized_points.reverse.map { |p| remove_dups.call p }.compact.reverse
 
   area_sum = 0
   normalized_points.each_cons(2) { |first, second| area_sum += ((second[0] - first[0]) * second[1]) }

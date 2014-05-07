@@ -29,7 +29,42 @@ class Predictor
   def file_similarity file1, file2
     #v1 = @commit_matrix.file_vector file1
     #v2 = @commit_matrix.file_vector file2
-    return inner_prod(file1, file2) / (size(file1) * size(file2))
+    #return inner_prod(file1, file2) / (size(file1) * size(file2))
+    #return jaccard_similarity file1, file2
+    return pearson_correlation file1, file2
+  end
+
+  def jaccard_similarity file1, file2
+    set1 = @commit_matrix.file(file1).dup
+    set2 = @commit_matrix.file(file2).dup
+    return (set1 & set2).size / (set1 | set2).size.to_f
+  end
+
+  def pearson_correlation file1, file2
+    set1 = @commit_matrix.file(file1).dup
+    set2 = @commit_matrix.file(file2).dup
+    number_of_commits = @commit_matrix.rows.size.to_f
+    mean1 = set1.size / number_of_commits
+    mean2 = set2.size / number_of_commits
+
+    partial_numerator = (set1 | set2).map do |s|
+      if set1.include? s
+        if set2.include? s
+          (1 - mean1) * (1 - mean2)
+        else
+          (1 - mean1) * mean2
+        end
+      else
+        (1 - mean2) * mean1
+      end
+    end
+    numerator = partial_numerator.reduce(:+) + (number_of_commits * mean1 * mean2)
+
+    dev1 = Math.sqrt((set1.size * ((1 - mean1)**2)) + ((number_of_commits-set1.size)*(mean1**2)))
+    dev2 = Math.sqrt((set2.size * ((1 - mean2)**2)) + ((number_of_commits-set2.size)*(mean2**2)))
+
+    denom = dev1 * dev2
+    return (denom == 0) ? 0 : numerator / (dev1 * dev2)
   end
 
   def inner_prod file1, file2
