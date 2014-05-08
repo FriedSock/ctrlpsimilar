@@ -27,10 +27,10 @@ class Predictor
   end
 
   def file_similarity file1, file2
-    #return inner_prod(file1, file2) / (size(file1) * size(file2))
+    return inner_prod(file1, file2) / (size(file1) * size(file2))
     #return jaccard_similarity file1, file2
     #return pearson_correlation file1, file2
-    return inner_prod(file1,file2)
+    #return inner_prod(file1,file2)
   end
 
   def jaccard_similarity file1, file2

@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
+require File.join(File.dirname(__FILE__), 'third_party/Logistic-Regression/classifier.rb')
 require 'csv'
 
 def is_merge_commit? hash
@@ -18,6 +19,8 @@ def make_observation hash
   observation_hash
 end
 
+MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 5
+
 if __FILE__ == $0
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
   evaluated_commits = 0
@@ -31,6 +34,11 @@ if __FILE__ == $0
   scatter_plot = []
 
   all_predictions = []
+  classifier = nil
+
+  retrain_classifier = true
+  old_theta = []
+  same_counter = 0
 
   commits.each do |commit_hash|
     commit_matrix = retrieve_matrix commit_hash
@@ -44,9 +52,32 @@ if __FILE__ == $0
       predictor = Predictor.new(left_one_out, commit_matrix)
       prediction_hash[k] = predictor.predict[k] if predictor.predict[k]
     end
-    prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
-    next if prediction_hash.empty?
+
     actual_value = lambda { |f| return observation[f] || 0 }
+    prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
+    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
+
+    if classifier && !prediction_hash.empty?
+
+      if (old_theta.length == classifier.thetaMatrix.to_a.length) && retrain_classifier
+        if old_theta.zip(classifier.thetaMatrix.to_a).map{|a| a.flatten.reduce(:-)}.map{|v| v.abs < 0.2}.reduce(:&)
+          same_counter += 1
+          retrain_classifier = false if same_counter == MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS
+        else
+          old_theta = classifier.thetaMatrix.to_a
+          same_counter = 0
+        end
+      else
+        old_theta = classifier.thetaMatrix.to_a
+      end
+
+      things = prediction_hash.map { |k,v| [v,actual_value.call(k)]}
+      vals = things.map {|h| [] << h.first}
+      result = prediction_hash.keys.zip classifier.classify(vals)
+      prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
+    end
+
+    next if prediction_hash.empty?
     puts "Hash: #{commit_hash}"
     mae = prediction_hash.map { |k,v| v - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
     mse = prediction_hash.map { |k,v| v - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
@@ -60,9 +91,8 @@ if __FILE__ == $0
       positive_mse_sum += positive_mse
     end
     #all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0.4}
-    all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0}
-    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
-    #all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.take(3).map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.4 }
+    #all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0}
+    all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.5 }
 
     true_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 1}
     false_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 0}
@@ -73,7 +103,19 @@ if __FILE__ == $0
     mse_sum += mse
     puts "MAE: #{mae}"
     puts "MSE: #{mse}"
+    puts "theta #{[classifier.thetaMatrix]}" if classifier
     puts ""
+
+
+    if retrain_classifier
+      puts "same_counter: #{same_counter}"
+      id = 0
+      train_data = lambda { |point| [id+=1, point[1], point[0]]}
+      classifier = Classifier.new
+      classifier.set_train_data scatter_plot.map{ |p| train_data.call p }
+      classifier.train
+    end
+
   end
   all_predictions.sort! {|p1,p2| p2[0] <=> p1[0] }
   xcounter = 0
