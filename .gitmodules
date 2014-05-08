@@ -1,0 +1,3 @@
+[submodule "third_party/Logistic-Regression"]
+	path = third_party/Logistic-Regression
+	url = https://github.com/mirzaasif/Logistic-Regression.git
