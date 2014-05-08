@@ -19,7 +19,7 @@ def make_observation hash
   observation_hash
 end
 
-MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 5
+MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
 if __FILE__ == $0
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
@@ -31,6 +31,7 @@ if __FILE__ == $0
   true_positives = 0
   false_positives = 0
   false_negatives = 0
+  similarity_results = []
   scatter_plot = []
 
   all_predictions = []
@@ -55,7 +56,7 @@ if __FILE__ == $0
 
     actual_value = lambda { |f| return observation[f] || 0 }
     prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
-    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
+    similarity_results += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
     if classifier && !prediction_hash.empty?
 
@@ -76,6 +77,7 @@ if __FILE__ == $0
       result = prediction_hash.keys.zip classifier.classify(vals)
       prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
     end
+    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
     next if prediction_hash.empty?
     puts "Hash: #{commit_hash}"
@@ -90,8 +92,6 @@ if __FILE__ == $0
       pos_evaluated_commits += 1
       positive_mse_sum += positive_mse
     end
-    #all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0.4}
-    #all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0}
     all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.5 }
 
     true_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 1}
@@ -111,8 +111,9 @@ if __FILE__ == $0
       puts "same_counter: #{same_counter}"
       id = 0
       train_data = lambda { |point| [id+=1, point[1], point[0]]}
-      classifier = Classifier.new
-      classifier.set_train_data scatter_plot.map{ |p| train_data.call p }
+      classifier = Classifier.new(maxSample=500)
+      training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
+      classifier.set_train_data training_set.map{ |p| train_data.call p }
       classifier.train
     end
 
