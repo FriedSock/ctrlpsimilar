@@ -25,6 +25,10 @@ if __FILE__ == $0
   mse_sum = 0
   positive_mse_sum = 0
   pos_evaluated_commits = 0
+  true_positives = 0
+  false_positives = 0
+  false_negatives = 0
+  scatter_plot = []
 
   all_predictions = []
 
@@ -55,7 +59,14 @@ if __FILE__ == $0
       pos_evaluated_commits += 1
       positive_mse_sum += positive_mse
     end
-    all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0.5}
+    #all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0.4}
+    all_predictions += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.select {|v,_| v > 0}
+    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
+    #all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.take(3).map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.4 }
+
+    true_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 1}
+    false_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 0}
+    false_negatives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] < 0.5 && k[1] == 1}
 
     evaluated_commits +=1 if mae > 0
     mae_sum += mae
@@ -79,6 +90,12 @@ if __FILE__ == $0
     end
   end
 
+  CSV.open('scatter.csv', 'w') do |csv|
+    scatter_plot.each do |np|
+      csv << np
+    end
+  end
+
   #found = Set.new
   #remove_dups = lambda do |p|
   #  if found.include? p[0]
@@ -94,12 +111,19 @@ if __FILE__ == $0
   normalized_points.each_cons(2) { |first, second| area_sum += ((second[0] - first[0]) * second[1]) }
 
    plotcommandpath = File.join(File.dirname(__FILE__), 'plotcommands.gp')
+   scatterplotcommandpath = File.join(File.dirname(__FILE__), 'scatterplotcommands.gp')
   `gnuplot #{plotcommandpath}`
+  `gnuplot #{scatterplotcommandpath}`
 
   puts ""
   puts "mean MAE: #{mae_sum / evaluated_commits}"
   puts "mean MSE: #{mse_sum / evaluated_commits}"
   puts "mean Positive MSE: #{positive_mse_sum / pos_evaluated_commits}"
   puts "Swets' a measure: #{area_sum}"
+
+  precision = true_positives / (true_positives + false_positives).to_f
+  recall = true_positives / (true_positives + false_negatives).to_f
+  puts "Precision: #{precision}"
+  puts "Recall: #{recall}"
 end
 
