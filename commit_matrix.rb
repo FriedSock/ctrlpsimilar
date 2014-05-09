@@ -1,5 +1,4 @@
 require 'matrix.rb'
-require 'debugger'
 require 'set.rb'
 
 class CommitMatrix
@@ -77,8 +76,7 @@ class CommitMatrix
     elsif words.first =~ /D.*/
       delete_file words.last
     else
-      debugger
-      puts "something has gone horribly wrong"
+      puts "something has gone horribly wrong, please report this bug to jbtwentythree@gmail.com"
       exit(1)
     end
   end
@@ -118,6 +116,10 @@ class CommitMatrix
     matrix1.commit_hash = commit_hash
     matrix1.next_commit
     matrix1
+  end
+
+  def ordered_rows
+    @_ordered_rows ||= `git rev-list --topo-order --reverse #{@commit_hash}`.split
   end
 
 

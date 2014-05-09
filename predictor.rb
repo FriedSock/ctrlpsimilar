@@ -1,8 +1,11 @@
 require 'matrix.rb'
+require 'debugger'
 
 class Predictor
 
-  def initialize observation, commit_matrix
+  def initialize observation, commit_matrix, similarity_type=:time_inner_prod
+    @similarity_type = similarity_type
+    @file_size_cache = {}
     @observation = observation
     @commit_matrix = commit_matrix
   end
@@ -27,10 +30,21 @@ class Predictor
   end
 
   def file_similarity file1, file2
-    return inner_prod(file1, file2) / (size(file1) * size(file2))
-    #return jaccard_similarity file1, file2
-    #return pearson_correlation file1, file2
-    #return inner_prod(file1,file2)
+
+    case @similarity_type
+    when :time_inner_prod
+      return time_weight_inner_prod(file1, file2)
+    when :time_cosine
+      return time_weight_inner_prod(file1, file2) / (time_weight_size(file1) * time_weight_size(file2))
+    when :time_pearson
+      #todo
+    when :pearson
+      return pearson_correlation file1, file2
+    when :inner
+      return inner_prod(file1,file2)
+    when :jaccard
+      return jaccard_similarity file1, file2
+    end
   end
 
   def jaccard_similarity file1, file2
@@ -69,12 +83,34 @@ class Predictor
   def inner_prod file1, file2
     vec1 = @commit_matrix.file file1
     vec2 = @commit_matrix.file file2
-    vec1.map { |r| vec2.include?(r) ? 1 : 0 }.reduce(:+)
+    #vec1.map { |r| vec2.include?(r) ? 1 : 0 }.reduce(:+)
+    (vec1 & vec2).size
+  end
+
+  #Linear time decay
+  def time_weight_inner_prod file1, file2
+    vec1 = @commit_matrix.file file1
+    vec2 = @commit_matrix.file file2
+    ((vec1 & vec2).map {|v| weighted_rows[v]}+[0]).reduce(:+)
   end
 
   def size file
     Math.sqrt(@commit_matrix.file(file).size)
   end
 
+  def weighted_rows
+    @_rows ||= {}.tap do |hash|
+      size = @commit_matrix.ordered_rows.size.to_f
+      @commit_matrix.ordered_rows.each_with_index do |row,index|
+        hash[row] = index+1 / size
+      end
+    end
+  end
+
+  def time_weight_size file
+    return @file_size_cache[file] if @file_size_cache.has_key? file
+    vec =  @commit_matrix.file(file)
+    @file_size_cache[file] = Math.sqrt(vec.map {|v| weighted_rows[v]}.map{|v|v**2}.reduce(:+))
+  end
 end
 
