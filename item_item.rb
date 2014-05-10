@@ -114,6 +114,18 @@ def make_cache_folder_if_not_exists
   `mkdir -p #{GIT_ROOT}/#{FOLDER_NAME}`
 end
 
+def humanize secs
+  if secs < 1
+    return "#{secs} seconds"
+  end
+  [[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
+    if secs > 0
+      secs, n = secs.divmod(count)
+      "#{n.to_i} #{name}"
+    end
+  }.compact.reverse.join(' ')
+end
+
 if __FILE__ == $0
   make_cache_folder_if_not_exists
   start = Time.new
@@ -124,7 +136,7 @@ if __FILE__ == $0
   total_time = Time.new - start
   puts ''
   utf8 = lambda { |s| s.gsub(/\\u[\da-f]{4}/i) { |m| [m[-4..-1].to_i(16)].pack('U') }}
-  puts "Finished in #{total_time} seconds #{utf8.call("\xF0\x9F\x9A\xB4")}"
+  puts "Finished in #{humanize total_time} #{utf8.call("\xF0\x9F\x9A\xB4")}"
   puts ''
   puts "Matrices for #{$Commit_matrices.size} commits generated"
 end

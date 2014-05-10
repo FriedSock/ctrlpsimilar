@@ -3,7 +3,6 @@ require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
 require File.join(File.dirname(__FILE__), 'third_party/Logistic-Regression/classifier.rb')
 require File.join(File.dirname(__FILE__), 'matrix.rb')
-require 'ruby-debug'
 
 require 'csv'
 
@@ -20,6 +19,15 @@ def make_observation hash
     end
   end
   observation_hash
+end
+
+def humanize secs
+  [[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
+    if secs > 0
+      secs, n = secs.divmod(count)
+      "#{n.to_i} #{name}"
+    end
+  }.compact.reverse.join(' ')
 end
 
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
@@ -83,7 +91,7 @@ if __FILE__ == $0
     scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
     next if prediction_hash.empty?
-    puts "Hash: #{commit_hash}"
+    #puts "Hash: #{commit_hash}"
     mae = prediction_hash.map { |k,v| v - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
     mse = prediction_hash.map { |k,v| v - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
     positive_mse = prediction_hash.map { |k,v| actual_value.call(k) == 1 ? v - 1 : nil}.compact
@@ -91,7 +99,7 @@ if __FILE__ == $0
     if !positive_mse.empty?
       positive_mse.map! { |n| n**2 }
       positive_mse = positive_mse.reduce(:+) / positive_mse.size.to_f
-      puts "Positive MSE #{positive_mse}"
+      #puts "Positive MSE #{positive_mse}"
       pos_evaluated_commits += 1
       positive_mse_sum += positive_mse
     end
@@ -104,14 +112,15 @@ if __FILE__ == $0
     evaluated_commits +=1 if mae > 0
     mae_sum += mae
     mse_sum += mse
-    puts "MAE: #{mae}"
-    puts "MSE: #{mse}"
-    puts "theta #{[classifier.thetaMatrix]}" if classifier
-    puts ""
+    #puts "MAE: #{mae}"
+    #puts "MSE: #{mse}"
+    #puts "theta #{[classifier.thetaMatrix]}" if classifier
+    #puts ""
+    puts '.'
 
 
     if retrain_classifier
-      puts "same_counter: #{same_counter}"
+      #puts "same_counter: #{same_counter}"
       id = 0
       train_data = lambda { |point| [id+=1, point[1], point[0]]}
       classifier = Classifier.new(maxSample=500)
