@@ -85,7 +85,7 @@ if __FILE__ == $0
 
       things = prediction_hash.map { |k,v| [v,actual_value.call(k)]}
       vals = things.map {|h| [] << h.first}
-      result = prediction_hash.keys.zip classifier.classify(vals)
+      result = prediction_hash.keys.zip classifier.classify(vals).to_a
       prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
     end
     scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
