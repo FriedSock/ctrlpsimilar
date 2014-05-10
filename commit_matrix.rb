@@ -1,5 +1,6 @@
 require 'matrix.rb'
 require 'set.rb'
+require 'debugger'
 
 class CommitMatrix
 
@@ -15,14 +16,12 @@ class CommitMatrix
       @number_of_commits = parent.number_of_commits
       @columns = Marshal.load(Marshal.dump(parent.columns))
       @filenames_to_columns = Marshal.load(Marshal.dump(parent.filenames_to_columns))
-      @rows = Marshal.load(Marshal.dump(parent.rows)).add hash
     else
       @number_of_files = 0
       @number_of_commits = 0
       @filenames_to_columns = {}
       @parent_hash = nil
       @columns = {}
-      @rows = Set.new.add hash
     end
     @archived_files = {}
   end
@@ -90,19 +89,36 @@ class CommitMatrix
 
     size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
 
-    new_commits = matrix2.rows - matrix1.rows
-    matrix1.rows = matrix1.rows | matrix2.rows
+    matrix1.commit_hash = commit_hash
 
     renamed_files = []
     diff.split("\n").each do |file|
       words = file.split
       if words.first =~ /R.*/
         matrix1.rename_file words[-2], words[-1]
+        debugger if !matrix2.file(words[-1])
         matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-1])
         #Not sure about this..
       elsif words.first =~ /A.*/
         matrix1.create_new_file_with_history words.last
-        matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix2.file(words.last)
+
+        if matrix2.file(words.last)
+          filename = words.last
+        else
+          #The file has been renamed as part of the resolution to a merge conflict, so we need to find its name from
+          #the branch it was created on.
+          little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{matrix2.commit_hash} #{commit_hash}`
+          name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
+          if name_status_change
+            filename = name_status_change.split[1]
+          else
+            #For some reason, this is a new file since the merge..
+            matrix1.create_new_file words.last
+            next
+          end
+        end
+
+        matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix2.file(filename)
         renamed_files << words.last
       elsif words.first =~ /M.*/
         #Don't need to do anything
@@ -111,9 +127,7 @@ class CommitMatrix
       end
     end
 
-    matrix1.number_of_commits = matrix1.rows.size
-    matrix1.rows.add commit_hash
-    matrix1.commit_hash = commit_hash
+    matrix1.number_of_commits = matrix1.ordered_rows.size
     matrix1.next_commit
     matrix1
   end

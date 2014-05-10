@@ -58,7 +58,7 @@ def make_merge_matrix commit_hash, parents
 
   parent1 = $Commit_matrices[parents.first]
   parent2 = $Commit_matrices[parents.last]
-  diff = `git diff -M --name-status #{parents.first} #{commit_hash}`
+  diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{parents.first} #{commit_hash}`
   cache_commit commit_hash, CommitMatrix.merge(parent1, parent2, diff, commit_hash)
 end
 
