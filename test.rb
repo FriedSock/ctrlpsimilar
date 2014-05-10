@@ -39,9 +39,7 @@ MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 if __FILE__ == $0
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
   evaluated_commits = 0
-  mae_sum = 0
   mse_sum = 0
-  positive_mse_sum = 0
   pos_evaluated_commits = 0
   true_positives = 0
   false_positives = 0
@@ -52,8 +50,7 @@ if __FILE__ == $0
   all_predictions = []
   classifier = nil
 
-  retrain_classifier = true
-  old_theta = []
+  using_classifier = false
   same_counter = 0
 
   commits.each do |commit_hash|
@@ -73,52 +70,15 @@ if __FILE__ == $0
     prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
     similarity_results += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
-    if classifier && !prediction_hash.empty?
-
-      if (old_theta.length == classifier.thetaMatrix.to_a.length) && retrain_classifier
-        if old_theta.zip(classifier.thetaMatrix.to_a).map{|a| a.flatten.reduce(:-)}.map{|v| v.abs < 0.2}.reduce(:&)
-          same_counter += 1
-          retrain_classifier = false if same_counter == MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS
-        else
-          old_theta = classifier.thetaMatrix.to_a
-          same_counter = 0
-        end
-      else
-        old_theta = classifier.thetaMatrix.to_a
-      end
-
-      things = prediction_hash.map { |k,v| [v,actual_value.call(k)]}
-      vals = things.map {|h| [] << h.first}
-      result = prediction_hash.keys.zip classifier.classify(vals).to_a
+    if using_classifier && classifier && !prediction_hash.empty?
+      observation_matrix = prediction_hash.values.map { |h| [] << h }
+      result = prediction_hash.keys.zip classifier.classify(observation_matrix).to_a
       prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
     end
     scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
-    next if prediction_hash.empty?
-    #puts "Hash: #{commit_hash}"
-    mae = prediction_hash.map { |k,v| v - actual_value.call(k) }.map(&:abs).reduce(:+) / prediction_hash.size.to_f
-    mse = prediction_hash.map { |k,v| v - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
-    positive_mse = prediction_hash.map { |k,v| actual_value.call(k) == 1 ? v - 1 : nil}.compact
 
-    if !positive_mse.empty?
-      positive_mse.map! { |n| n**2 }
-      positive_mse = positive_mse.reduce(:+) / positive_mse.size.to_f
-      #puts "Positive MSE #{positive_mse}"
-      pos_evaluated_commits += 1
-      positive_mse_sum += positive_mse
-    end
-    all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.5 }
-
-    true_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 1}
-    false_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 0}
-    false_negatives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] < 0.5 && k[1] == 1}
-
-    evaluated_commits +=1 if mae > 0
-    mae_sum += mae
-    mse_sum += mse
-    print_and_flush '.'
-
-    if retrain_classifier
+    if using_classifier && !prediction_hash.empty?
       id = 0
       train_data = lambda { |point| [id+=1, point[1], point[0]]}
       classifier = Classifier.new
@@ -126,6 +86,21 @@ if __FILE__ == $0
       classifier.set_train_data training_set.map{ |p| train_data.call p }
       classifier.train
     end
+
+
+    next if prediction_hash.empty? || (!classifier && using_classifier)
+
+    mse = prediction_hash.map { |k,v| v - actual_value.call(k) }.map { |n| n ** 2 }.reduce(:+) / prediction_hash.size.to_f
+    mse_sum += mse
+    evaluated_commits +=1 if mse > 0
+
+    all_predictions += prediction_hash.sort { |p1, p2| p2[1] <=> p1[1] }.map { |k,v| [v, actual_value.call(k)]}.select { |v,_| v > 0.5 }
+    true_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 1}
+    false_positives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] > 0.5 && k[1] == 0}
+    false_negatives += prediction_hash.map { |k,v| [v, actual_value.call(k)] }.count {|k| k[0] < 0.5 && k[1] == 1}
+
+    #Let the user know the loop has finised
+    print_and_flush '.'
   end
 
 
@@ -159,9 +134,7 @@ if __FILE__ == $0
   `gnuplot #{scatterplotcommandpath}`
 
   puts ""
-  puts "mean MAE: #{mae_sum / evaluated_commits}"
   puts "mean MSE: #{mse_sum / evaluated_commits}"
-  puts "mean Positive MSE: #{positive_mse_sum / pos_evaluated_commits}"
   puts "Swets' a measure: #{area_sum}"
 
   precision = true_positives / (true_positives + false_positives).to_f
