@@ -30,6 +30,10 @@ def humanize secs
   }.compact.reverse.join(' ')
 end
 
+def print_and_flush(str)
+  print str
+  $stdout.flush
+end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
 if __FILE__ == $0
@@ -112,24 +116,19 @@ if __FILE__ == $0
     evaluated_commits +=1 if mae > 0
     mae_sum += mae
     mse_sum += mse
-    #puts "MAE: #{mae}"
-    #puts "MSE: #{mse}"
-    #puts "theta #{[classifier.thetaMatrix]}" if classifier
-    #puts ""
-    puts '.'
-
+    print_and_flush '.'
 
     if retrain_classifier
-      #puts "same_counter: #{same_counter}"
       id = 0
       train_data = lambda { |point| [id+=1, point[1], point[0]]}
-      classifier = Classifier.new(maxSample=500)
+      classifier = Classifier.new
       training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
       classifier.set_train_data training_set.map{ |p| train_data.call p }
       classifier.train
     end
-
   end
+
+
   all_predictions.sort! {|p1,p2| p2[0] <=> p1[0] }
   xcounter = 0
   ycounter = 0
@@ -150,17 +149,6 @@ if __FILE__ == $0
       csv << np
     end
   end
-
-  #found = Set.new
-  #remove_dups = lambda do |p|
-  #  if found.include? p[0]
-  #    return nil
-  #  else
-  #    found.add p[0]
-  #    return p
-  #  end
-  #end
-  #normalized_points = normalized_points.reverse.map { |p| remove_dups.call p }.compact.reverse
 
   area_sum = 0
   normalized_points.each_cons(2) { |first, second| area_sum += ((second[0] - first[0]) * second[1]) }
