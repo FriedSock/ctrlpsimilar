@@ -2,6 +2,9 @@ require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
 require File.join(File.dirname(__FILE__), 'third_party/Logistic-Regression/classifier.rb')
+require File.join(File.dirname(__FILE__), 'matrix.rb')
+require 'ruby-debug'
+
 require 'csv'
 
 def is_merge_commit? hash
@@ -48,7 +51,7 @@ if __FILE__ == $0
     prediction_hash = {}
     observation = make_observation commit_hash
     observation.each do |k, v|
-      left_one_out = observation.select { |ok, ov| ok != k }
+      left_one_out = observation.reject { |ok, ov| ok == k }
       next if left_one_out.empty?
       predictor = Predictor.new(left_one_out, commit_matrix)
       prediction_hash[k] = predictor.predict[k] if predictor.predict[k]

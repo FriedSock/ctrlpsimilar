@@ -1,6 +1,5 @@
 require 'matrix.rb'
 require 'set.rb'
-require 'debugger'
 
 class CommitMatrix
 
