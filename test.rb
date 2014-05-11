@@ -36,7 +36,7 @@ def print_and_flush(str)
 end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
-if __FILE__ == $0
+def test_measure similarity_type
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
   evaluated_commits = 0
   mse_sum = 0
@@ -62,7 +62,7 @@ if __FILE__ == $0
     observation.each do |k, v|
       left_one_out = observation.reject { |ok, ov| ok == k }
       next if left_one_out.empty?
-      predictor = Predictor.new(left_one_out, commit_matrix)
+      predictor = Predictor.new(left_one_out, commit_matrix, similarity_type)
       prediction_hash[k] = predictor.predict[k] if predictor.predict[k]
     end
 
@@ -141,5 +141,15 @@ if __FILE__ == $0
   recall = true_positives / (true_positives + false_negatives).to_f
   puts "Precision: #{precision}"
   puts "Recall: #{recall}"
+end
+
+if __FILE__ == $0
+  #measures = [:inner, :pearson, :cosine, :jaccard, :time_inner_prod, :time_cosine]
+  measures = [:time_pearson]
+  measures.each do |m|
+    puts "Testing #{m}"
+    test_measure m
+    puts ''
+  end
 end
 
