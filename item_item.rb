@@ -46,24 +46,24 @@ def build_matrix commit_hash
     build_matrix parents[2] if !retrieve_matrix parents[2]
     make_merge_matrix commit_hash, parents[1..2]
   elsif parents.size == 2
-    build_matrix parents[1] if !retrieve_matrix parents[1]
-    make_hard_matrix commit_hash, $Commit_matrices[parents[1]]
+    build_matrix parents[1] if !retrieve_matrix(parents[1])
+    make_hard_matrix commit_hash, retrieve_matrix(parents[1])
   else
     make_hard_matrix commit_hash, nil
   end
 end
 
 def make_merge_matrix commit_hash, parents
-  return if $Commit_matrices.has_key? commit_hash
+  return if retrieve_matrix(commit_hash)
 
-  parent1 = $Commit_matrices[parents.first]
-  parent2 = $Commit_matrices[parents.last]
+  parent1 = retrieve_matrix parents.first
+  parent2 = retrieve_matrix parents.last
   diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{parents.first} #{commit_hash}`
   cache_commit commit_hash, CommitMatrix.merge(parent1, parent2, diff, commit_hash)
 end
 
 def make_hard_matrix commit_hash, parent
-  return if $Commit_matrices.has_key? commit_hash
+  return if retrieve_matrix(commit_hash)
 
   commit_matrix = CommitMatrix.new commit_hash, parent
   name_statuses = `git diff-tree --no-commit-id -r -M -c --name-status --root #{commit_hash}`
