@@ -1,5 +1,6 @@
 require 'matrix.rb'
 require 'set.rb'
+require 'rubygems'
 require 'ruby-debug'
 
 class CommitMatrix
@@ -90,7 +91,6 @@ class CommitMatrix
     size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
 
     matrix1.commit_hash = commit_hash
-    debugger if commit_hash == '9523c4d2d16585c7caad9d5049dc79a533402a7a'
 
     renamed_files = []
     diff.split("\n").each do |file|
@@ -102,7 +102,6 @@ class CommitMatrix
         else
           #The file was just renamed as the resolution to a merge conflict
           matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-2]) if matrix2.file(words[-2])
-          #exit(1)
         end
       elsif words.first =~ /A.*/
         matrix1.create_new_file_with_history words.last
@@ -114,7 +113,7 @@ class CommitMatrix
           #the branch it was created on.
           little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{matrix2.commit_hash} #{commit_hash}`
           name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
-          if name_status_change
+          if name_status_change && name_status_change =~ /R.*/
             filename = name_status_change.split[1]
           else
             #For some reason, this is a new file since the merge..
@@ -140,6 +139,5 @@ class CommitMatrix
   def ordered_rows
     @_ordered_rows ||= `git rev-list --topo-order --reverse #{@commit_hash}`.split
   end
-
 
 end
