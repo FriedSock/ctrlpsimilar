@@ -89,6 +89,7 @@ def retrieve_matrix hash
 end
 
 def cache_commit hash, commit_matrix
+  $Commit_matrices = {} if $Commit_matrices.size > 50
   $Commit_matrices[hash] = commit_matrix
   write_to_cache_file commit_matrix
   print_and_flush '.'
