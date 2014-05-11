@@ -64,7 +64,7 @@ def test_measure similarity_type, using_classifier
     end
 
     actual_value = lambda { |f| return observation[f] || 0 }
-    prediction_hash = Predictor.new(observation, commit_matrix).predict.merge prediction_hash
+    prediction_hash = Predictor.new(observation, commit_matrix, similarity_type).predict.merge prediction_hash
     similarity_results += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
     if using_classifier && classifier && !prediction_hash.empty?
