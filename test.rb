@@ -36,7 +36,7 @@ def print_and_flush(str)
 end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
-def test_measure similarity_type
+def test_measure similarity_type, using_classifier
   commits = `git rev-list --all --topo-order --reverse`.split("\n")
   evaluated_commits = 0
   mse_sum = 0
@@ -49,9 +49,6 @@ def test_measure similarity_type
 
   all_predictions = []
   classifier = nil
-
-  using_classifier = false
-  same_counter = 0
 
   commits.each do |commit_hash|
     commit_matrix = retrieve_matrix commit_hash
@@ -144,12 +141,14 @@ def test_measure similarity_type
 end
 
 if __FILE__ == $0
-  #measures = [:inner, :pearson, :cosine, :jaccard, :time_inner_prod, :time_cosine]
-  measures = [:time_pearson]
-  measures.each do |m|
-    puts "Testing #{m}"
-    test_measure m
-    puts ''
+  measures = [:inner, :pearson, :cosine, :jaccard, :time_inner_prod, :time_pearson, :time_cosine]
+  [false, true].each do |using_classifier|
+    measures.each do |m|
+      with_or_without = using_classifier ? "with" : "without"
+      puts "Testing #{m} #{with_or_without} logisic regression"
+      test_measure m, using_classifier
+      puts ''
+    end
   end
 end
 
