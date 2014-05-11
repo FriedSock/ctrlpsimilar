@@ -1,5 +1,6 @@
 require 'matrix.rb'
 require 'set.rb'
+require 'ruby-debug'
 
 class CommitMatrix
 
@@ -89,15 +90,20 @@ class CommitMatrix
     size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
 
     matrix1.commit_hash = commit_hash
+    debugger if commit_hash == '9523c4d2d16585c7caad9d5049dc79a533402a7a'
 
     renamed_files = []
     diff.split("\n").each do |file|
       words = file.split
       if words.first =~ /R.*/
         matrix1.rename_file words[-2], words[-1]
-        debugger if !matrix2.file(words[-1])
-        matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-1])
-        #Not sure about this..
+        if matrix2.file(words[-1])
+          matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-1])
+        else
+          #The file was just renamed as the resolution to a merge conflict
+          matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-2]) if matrix2.file(words[-2])
+          #exit(1)
+        end
       elsif words.first =~ /A.*/
         matrix1.create_new_file_with_history words.last
 
