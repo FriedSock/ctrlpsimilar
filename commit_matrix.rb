@@ -1,5 +1,7 @@
 require 'matrix.rb'
 require 'set.rb'
+#require 'rubygems'
+#require 'ruby-debug'
 
 class CommitMatrix
 
@@ -109,7 +111,7 @@ class CommitMatrix
 
         parents_with_file = parents.select {|p| p.file(words.last) }
         parent_set_union = Set.new
-        if parents_with_file
+        if !parents_with_file.empty?
           parents_with_file.each {|p| parent_set_union += p.file(words.last)}
         else
           #The file has been renamed as part of the resolution to a merge conflict, so we need to find its name from
