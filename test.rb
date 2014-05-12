@@ -37,7 +37,7 @@ end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
 def test_measure similarity_type, using_classifier
-  commits = `git rev-list --all --topo-order --reverse`.split("\n")
+  commits = `git rev-list HEAD --topo-order --reverse`.split("\n")
   evaluated_commits = 0
   mse_sum = 0
   pos_evaluated_commits = 0
