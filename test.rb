@@ -37,7 +37,7 @@ end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
 def test_measure similarity_type, using_classifier
-  commits = `git rev-list HEAD --topo-order --reverse`.split("\n")
+  commits = `git rev-list HEAD --topo-order --reverse -n 100`.split("\n")
   evaluated_commits = 0
   mse_sum = 0
   pos_evaluated_commits = 0
@@ -67,7 +67,7 @@ def test_measure similarity_type, using_classifier
     similarity_results += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
     if using_classifier && classifier && !prediction_hash.empty?
-      observation_matrix = prediction_hash.values.map { |h| [] << h }
+      observation_matrix = prediction_hash.values.map { |h| [1] << h }
       result = prediction_hash.keys.zip classifier.classify(observation_matrix).to_a
       prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
     end
@@ -75,7 +75,9 @@ def test_measure similarity_type, using_classifier
 
     if using_classifier && !prediction_hash.empty?
       id = 0
-      train_data = lambda { |point| [id+=1, point[1], point[0]]}
+
+                                  # [id,      yvalue, 1, xvalue]
+      train_data = lambda { |point| [id+=1, point[1], 1, point[0]]}
       classifier = Classifier.new
       training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
       classifier.set_train_data training_set.map{ |p| train_data.call p }
