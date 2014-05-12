@@ -67,13 +67,13 @@ class CommitMatrix
 
   def handle_file file
     words = file.split
-    if words.first =~ /M|T.*/
+    if words.first =~ /^M|T.*/
       add_one_value_to words.last
-    elsif words.first =~ /A.*/
+    elsif words.first =~ /^A.*/
       create_new_file words.last
-    elsif words.first =~ /R.*/
+    elsif words.first =~ /^R.*/
       rename_file words[-2], words.last
-    elsif words.first =~ /D.*/
+    elsif words.first =~ /^D.*/
       delete_file words.last
     else
       puts "something has gone horribly wrong, please report this bug to jbtwentythree@gmail.com"
@@ -92,13 +92,13 @@ class CommitMatrix
 
     diff.split("\n").each do |file|
       words = file.split
-      if words.first =~ /R.*/
+      if words.first =~ /^R.*/
         matrix1.rename_file words[-2], words[-1]
         parent_set_union = Set.new
         parents.each do |p|
           little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{p.commit_hash} #{commit_hash}`
           name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
-          if name_status_change && name_status_change =~ /R.*/
+          if name_status_change && name_status_change =~ /^R.*/
             filename = name_status_change.split[1]
             parent_set_union += p.file filename
           else
@@ -120,7 +120,7 @@ class CommitMatrix
           parents.each do |p|
             little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{p.commit_hash} #{commit_hash}`
             name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
-            if name_status_change && name_status_change =~ /R.*/
+            if name_status_change && name_status_change =~ /^R.*/
               filename = name_status_change.split[1]
               parent_set_union += p.file(filename)
             end
@@ -134,13 +134,13 @@ class CommitMatrix
         end
         matrix1.columns[matrix1.filenames_to_columns[words.last]] = parent_set_union
 
-      elsif words.first =~ /M.*/
+      elsif words.first =~ /^M.*/
         #We still want to add any potential non-zeros to our column
         parents_with_file = parents.select { |p| p.file(words.last) }
         parent_set_union = Set.new
         parents_with_file.each { |p| parent_set_union += p.file(words.last) }
         matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix1.file(words.last) + parent_set_union
-      elsif words.first =~ /D.*/
+      elsif words.first =~ /^D.*/
         matrix1.delete_file words.last
       end
     end
