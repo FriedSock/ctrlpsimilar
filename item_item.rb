@@ -1,6 +1,4 @@
 require 'pathname.rb'
-require 'rubygems'
-require 'ruby-debug'
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 
 TEMP_FILENAME = '/tmp/commit_files'

@@ -1,7 +1,5 @@
 require 'matrix.rb'
 require 'set.rb'
-require 'rubygems'
-require 'ruby-debug'
 
 class CommitMatrix
 
