@@ -84,6 +84,7 @@ def make_hard_matrix commit_hash, parent
 end
 
 def retrieve_matrix hash
+  $Commit_matrices = {} if $Commit_matrices.size > 50
   return $Commit_matrices[hash] if $Commit_matrices.has_key? hash
   filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{hash}"
   if Pathname.new(filename).exist?
