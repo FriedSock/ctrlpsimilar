@@ -4,6 +4,12 @@ require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 TEMP_FILENAME = '/tmp/commit_files'
 
 def main
+  rev = `git rev-list HEAD`.chomp
+  retrieve_matrix rev
+  ''
+end
+
+def main_old
   output = []
   raw = File.open(TEMP_FILENAME).read
   `rm #{TEMP_FILENAME}`

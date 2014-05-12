@@ -45,7 +45,6 @@ def test_measure similarity_type, using_classifier
   false_positives = 0
   false_negatives = 0
   similarity_results = []
-  scatter_plot = []
 
   all_predictions = []
   classifier = nil
@@ -72,7 +71,6 @@ def test_measure similarity_type, using_classifier
       result = prediction_hash.keys.zip classifier.classify(observation_matrix).to_a
       prediction_hash = {}.tap { |new_hash| result.each { |r| new_hash[r[0]] = r[1] } }
     end
-    scatter_plot += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
 
     if using_classifier && !prediction_hash.empty?
@@ -112,12 +110,6 @@ def test_measure similarity_type, using_classifier
 
   CSV.open('roc.csv', 'w') do |csv|
     normalized_points.each do |np|
-      csv << np
-    end
-  end
-
-  CSV.open('scatter.csv', 'w') do |csv|
-    scatter_plot.each do |np|
       csv << np
     end
   end
