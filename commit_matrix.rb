@@ -82,50 +82,64 @@ class CommitMatrix
   end
 
   #Merge 2 commits
-  def self.merge matrix1, matrix2, diff, commit_hash
-    matrix1 = Marshal.load(Marshal.dump(matrix1))
-    matrix2 = Marshal.load(Marshal.dump(matrix2))
+  def self.merge matrices, commit_hash
+    matrix1 = Marshal.load(Marshal.dump(matrices.first))
+    parents = matrices[1..-1].map { |p| Marshal.load(Marshal.dump(p))}
+    matrix2 = parents.first
 
-    most_recent_ancestor = `git merge-base #{[matrix1,matrix2].map{ |m| m.commit_hash }.join " "}`.chomp
-
-    size_of_matrix1_diff = `git rev-list #{most_recent_ancestor}..#{matrix1.commit_hash} --count`.to_i
-
+    diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{matrix1.commit_hash} #{commit_hash}`
     matrix1.commit_hash = commit_hash
 
-    renamed_files = []
     diff.split("\n").each do |file|
       words = file.split
       if words.first =~ /R.*/
         matrix1.rename_file words[-2], words[-1]
-        if matrix2.file(words[-1])
-          matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-1])
-        else
-          #The file was just renamed as the resolution to a merge conflict
-          matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + matrix2.file(words[-2]) if matrix2.file(words[-2])
-        end
-      elsif words.first =~ /A.*/
-        matrix1.create_new_file_with_history words.last
-
-        if matrix2.file(words.last)
-          filename = words.last
-        else
-          #The file has been renamed as part of the resolution to a merge conflict, so we need to find its name from
-          #the branch it was created on.
-          little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{matrix2.commit_hash} #{commit_hash}`
+        parent_set_union = Set.new
+        parents.each do |p|
+          little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{p.commit_hash} #{commit_hash}`
           name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
           if name_status_change && name_status_change =~ /R.*/
             filename = name_status_change.split[1]
+            parent_set_union += p.file filename
           else
-            #For some reason, this is a new file since the merge..
+            parent_set_union += p.file(filename) if p.file(filename)
+          end
+        end
+        matrix1.columns[matrix1.filenames_to_columns[words[-1]]] = matrix1.file(words[-1]) + parent_set_union
+      elsif words.first =~ /A.*/
+        matrix1.create_new_file_with_history words.last
+
+        parents_with_file = parents.select {|p| p.file(words.last) }
+        parent_set_union = Set.new
+        if parents_with_file
+          parents_with_file.each {|p| parent_set_union += p.file(words.last)}
+        else
+          #The file has been renamed as part of the resolution to a merge conflict, so we need to find its name from
+          #the branch it was created on.
+          filename = nil
+          parents.each do |p|
+            little_diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{p.commit_hash} #{commit_hash}`
+            name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
+            if name_status_change && name_status_change =~ /R.*/
+              filename = name_status_change.split[1]
+              parent_set_union += p.file filename
+            end
+          end
+
+          if !filename
+            #For some reason, this is a new file, created in the merge..
             matrix1.create_new_file words.last
             next
           end
         end
+        matrix1.columns[matrix1.filenames_to_columns[words.last]] = parent_set_union
 
-        matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix2.file(filename)
-        renamed_files << words.last
       elsif words.first =~ /M.*/
-        #Don't need to do anything
+        #We still want to add any potential non-zeros to our column
+        parents_with_file = parents.select { |p| p.file(words.last) }
+        parent_set_union = Set.new
+        parents_with_file.each { |p| parent_set_union += p.file(words.last) }
+        matrix1.columns[matrix1.filenames_to_columns[words.last]] = matrix1.file(words.last) + parent_set_union
       elsif words.first =~ /D.*/
         matrix1.delete_file words.last
       end

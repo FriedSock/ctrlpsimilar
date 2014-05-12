@@ -1,4 +1,6 @@
 require 'pathname.rb'
+require 'rubygems'
+require 'ruby-debug'
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 
 TEMP_FILENAME = '/tmp/commit_files'
@@ -41,7 +43,12 @@ end
 def build_matrix commit_hash
   parents = `git rev-list --parents -n 1 #{commit_hash}`.split
   return if retrieve_matrix commit_hash
-  if parents.size == 3
+  if parents.size > 3
+    parents[1..-1].each do |p|
+      build_matrix p if !retrieve_matrix p
+    end
+    make_merge_matrix commit_hash, parents[1..-1]
+  elsif parents.size == 3
     build_matrix parents[1] if !retrieve_matrix parents[1]
     build_matrix parents[2] if !retrieve_matrix parents[2]
     make_merge_matrix commit_hash, parents[1..2]
@@ -56,10 +63,8 @@ end
 def make_merge_matrix commit_hash, parents
   return if retrieve_matrix(commit_hash)
 
-  parent1 = retrieve_matrix parents.first
-  parent2 = retrieve_matrix parents.last
-  diff = `git diff-tree --no-commit-id -r -M -c --name-status --root #{parents.first} #{commit_hash}`
-  cache_commit commit_hash, CommitMatrix.merge(parent1, parent2, diff, commit_hash)
+  parents.map! { |p| retrieve_matrix p }
+  cache_commit commit_hash, CommitMatrix.merge(parents, commit_hash)
 end
 
 def make_hard_matrix commit_hash, parent
@@ -89,6 +94,7 @@ def retrieve_matrix hash
 end
 
 def cache_commit hash, commit_matrix
+  $counter += 1
   $Commit_matrices = {} if $Commit_matrices.size > 50
   $Commit_matrices[hash] = commit_matrix
   write_to_cache_file commit_matrix
@@ -128,6 +134,7 @@ def humanize secs
 end
 
 if __FILE__ == $0
+  $counter = 0
   make_cache_folder_if_not_exists
   start = Time.new
   commit = `git rev-parse HEAD`.chomp
@@ -139,6 +146,6 @@ if __FILE__ == $0
   utf8 = lambda { |s| s.gsub(/\\u[\da-f]{4}/i) { |m| [m[-4..-1].to_i(16)].pack('U') }}
   puts "Finished in #{humanize total_time} #{utf8.call("\xF0\x9F\x9A\xB4")}"
   puts ''
-  puts "Matrices for #{$Commit_matrices.size} commits generated"
+  puts "Matrices for #{$counter} commits generated"
 end
 
