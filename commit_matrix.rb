@@ -122,7 +122,7 @@ class CommitMatrix
             name_status_change = little_diff.split("\n").select{|f| f =~ /.*#{words.last}.*/}.first
             if name_status_change && name_status_change =~ /R.*/
               filename = name_status_change.split[1]
-              parent_set_union += p.file filename
+              parent_set_union += p.file(filename)
             end
           end
 
