@@ -84,7 +84,7 @@ def make_hard_matrix commit_hash, parent
 end
 
 def retrieve_matrix hash
-  $Commit_matrices = {} if $Commit_matrices.size > 50
+  $Commit_matrices = {} if $Commit_matrices.size > 5
   return $Commit_matrices[hash] if $Commit_matrices.has_key? hash
   filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{hash}"
   if Pathname.new(filename).exist?
@@ -100,7 +100,7 @@ end
 
 def cache_commit hash, commit_matrix
   $counter += 1
-  $Commit_matrices = {} if $Commit_matrices.size > 50
+  $Commit_matrices = {} if $Commit_matrices.size > 5
   $Commit_matrices[hash] = commit_matrix
   write_to_cache_file commit_matrix
   print_and_flush '.'
