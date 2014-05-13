@@ -45,6 +45,7 @@ def test_measure similarity_type, using_classifier
   false_positives = 0
   false_negatives = 0
   similarity_results = []
+  last_prediction_hash = nil
 
   all_predictions = []
   classifier = nil
@@ -66,6 +67,8 @@ def test_measure similarity_type, using_classifier
     prediction_hash = Predictor.new(observation, commit_matrix, similarity_type).predict.merge prediction_hash
     similarity_results += prediction_hash.map { |k,v| [v, actual_value.call(k)] }
 
+    last_prediction_hash = prediction_hash.map { |k,v| [v, actual_value.call(k)] } if !prediction_hash.empty?
+
     if using_classifier && classifier && !prediction_hash.empty?
       observation_matrix = prediction_hash.values.map { |h| [1] << h }
       result = prediction_hash.keys.zip classifier.classify(observation_matrix).to_a
@@ -73,13 +76,14 @@ def test_measure similarity_type, using_classifier
     end
 
 
-    if using_classifier && !prediction_hash.empty?
+    if using_classifier && !prediction_hash.empty? && last_prediction_hash
       id = 0
 
                                   # [id,      yvalue, 1, xvalue]
       train_data = lambda { |point| [id+=1, point[1], 1, point[0]]}
       classifier = Classifier.new
-      training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
+      #training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
+      training_set = last_prediction_hash
       classifier.set_train_data training_set.map{ |p| train_data.call p }
       classifier.train
     end
@@ -110,19 +114,8 @@ def test_measure similarity_type, using_classifier
   normalize = lambda { |graph_point| [lastx == 0 ? 0 : graph_point.first / lastx, lasty == 0 ? 0 : graph_point.last / lasty] }
   normalized_points = graph_points.map { |gp| normalize.call gp }
 
-  CSV.open('roc.csv', 'w') do |csv|
-    normalized_points.each do |np|
-      csv << np
-    end
-  end
-
   area_sum = 0
   normalized_points.each_cons(2) { |first, second| area_sum += ((second[0] - first[0]) * second[1]) }
-
-   plotcommandpath = File.join(File.dirname(__FILE__), 'plotcommands.gp')
-   scatterplotcommandpath = File.join(File.dirname(__FILE__), 'scatterplotcommands.gp')
-  `gnuplot #{plotcommandpath}`
-  `gnuplot #{scatterplotcommandpath}`
 
   puts ""
   puts "mean MSE: #{mse_sum / evaluated_commits}"
@@ -136,7 +129,7 @@ end
 
 if __FILE__ == $0
   measures = [:inner, :pearson, :cosine, :jaccard, :time_inner_prod, :time_pearson, :time_cosine]
-  [false, true].each do |using_classifier|
+  [true].each do |using_classifier|
     measures.each do |m|
       with_or_without = using_classifier ? "with" : "without"
       puts "Testing #{m} #{with_or_without} logisic regression"
