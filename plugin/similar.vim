@@ -1,6 +1,5 @@
 let s:dir = "/" . join(split(expand("<sfile>"), "/")[0:-2], "/")
 ruby $dir = VIM::evaluate('s:dir')
-ruby load File.join($dir, '../script/init.rb');
 
 "Load guard
 if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
@@ -8,6 +7,13 @@ if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
 	finish
 endif
 let g:loaded_ctrlp_similar = 1
+
+let var=system('git ls-files')
+if v:shell_error !=0
+  let s:no_git_repo = 1
+else
+  ruby load File.join($dir, '../script/init.rb');
+endif
 
 call add(g:ctrlp_ext_vars, {
 	\ 'init': 'similar#init()',
@@ -26,7 +32,6 @@ call add(g:ctrlp_ext_vars, {
 function! similar#init()
   ruby gen_similar_files
   let s:buffer = ''
-
   return s:ctrlp_similar_files
 endfunction
 
@@ -38,19 +43,12 @@ endfunction
 "           the values are 'e', 'v', 't' and 'h', respectively
 "  a:str    the selected string
 "
-let s:cmd = ''
 function! similar#accept(mode, str)
 	" For this example, just exit ctrlp and run help
-  if a:mode ==# 'e'
-    let s:cmd =  'edit ' . split(a:str)[0]
-  elseif a:mode ==# 'v'
-    let s:cmd = 'vs ' . split(a:str)[0]
-  elseif a:mode ==# 't'
-    let s:cmd = 'tabedit ' . split(a:str)[0]
-  elseif a:mode ==# 'h'
-    let s:cmd = 'sp '. split(a:s)
-  endif
+  let str = split(a:str)[0]
+  call ctrlp#exit()
 	call similar#exit()
+  call ctrlp#acceptfile(a:mode, str)
 endfunction
 
 
@@ -61,7 +59,7 @@ endfunction
 
 " (optional) Do something after exiting ctrlp
 function! similar#exit()
-  execute '' . s:cmd
+  "Todo -- Logging
 endfunction
 
 
@@ -79,9 +77,19 @@ function! similar#id()
 endfunction
 
 function! SimilarWrapper()
+  if ( exists('s:no_git_repo') && s:no_git_repo )
+    echom 'No git repo present, reverting to vanilla ctrlp'
+    call ctrlp#init(0, { 'dir': '' })
+    return
+  endif
   let s:buffer = expand('%')
   call ctrlp#init(similar#id())
 endfunction
+
+function Do()
+  edit Readme.md
+endfunction
+nnoremap <leader>w :edit Readme.md<cr>
 
 " Create a command to directly call the new search type
 command! CtrlPSimilar call SimilarWrapper()
