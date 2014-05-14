@@ -19,13 +19,9 @@ call add(g:ctrlp_ext_vars, {
 	\ 'init': 'similar#init()',
 	\ 'accept': 'similar#accept',
 	\ 'lname': 'ctrlp-similar',
-	\ 'sname': 'c-similar',
 	\ 'type': 'line',
-	\ 'enter': 'similar#enter()',
 	\ 'exit': 'similar#exit()',
-	\ 'opts': 'similar#opts()',
 	\ 'sort': 0,
-	\ 'specinput': 0,
 	\ })
 
 
