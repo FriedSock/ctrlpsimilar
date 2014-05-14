@@ -1,6 +1,6 @@
 let s:dir = "/" . join(split(expand("<sfile>"), "/")[0:-2], "/")
 ruby $dir = VIM::evaluate('s:dir')
-ruby load File.join($dir, 'init.rb');
+ruby load File.join($dir, '../script/init.rb');
 
 "Load guard
 if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
@@ -27,7 +27,7 @@ function! similar#init()
   ruby gen_similar_files
   let s:buffer = ''
 
-	return s:ctrlp_similar_files
+  return s:ctrlp_similar_files
 endfunction
 
 
@@ -38,11 +38,19 @@ endfunction
 "           the values are 'e', 'v', 't' and 'h', respectively
 "  a:str    the selected string
 "
+let s:cmd = ''
 function! similar#accept(mode, str)
 	" For this example, just exit ctrlp and run help
+  if a:mode ==# 'e'
+    let s:cmd =  'edit ' . split(a:str)[0]
+  elseif a:mode ==# 'v'
+    let s:cmd = 'vs ' . split(a:str)[0]
+  elseif a:mode ==# 't'
+    let s:cmd = 'tabedit ' . split(a:str)[0]
+  elseif a:mode ==# 'h'
+    let s:cmd = 'sp '. split(a:s)
+  endif
 	call similar#exit()
-  "edit split(a:str)[0]
-  echom a:mode
 endfunction
 
 
@@ -53,6 +61,7 @@ endfunction
 
 " (optional) Do something after exiting ctrlp
 function! similar#exit()
+  execute '' . s:cmd
 endfunction
 
 
