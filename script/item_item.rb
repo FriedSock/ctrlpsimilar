@@ -102,7 +102,7 @@ def retrieve_matrix hash
 end
 
 def cache_commit hash, commit_matrix
-  $counter += 1
+  $counter += 1 if $counter
   $Commit_matrices = {} if $Commit_matrices.size > 5
   $Commit_matrices[hash] = commit_matrix
   write_to_cache_file commit_matrix
@@ -110,6 +110,7 @@ def cache_commit hash, commit_matrix
 end
 
 def print_and_flush(str)
+    return unless $not_inside_vim
     print str
     $stdout.flush
 end
@@ -122,7 +123,7 @@ def write_to_cache_file commit_matrix
   filename = "#{GIT_ROOT}/#{FOLDER_NAME}/#{commit_matrix.commit_hash}"
   return if Pathname.new(filename).exist?
   serialized_matrix = Marshal.dump(commit_matrix)
-  File.open(filename, 'w') { |f| f.write serialized_matrix}
+  File.open(filename, 'w') { |f| f.write serialized_matrix }
 end
 
 def make_cache_folder_if_not_exists
@@ -143,6 +144,7 @@ end
 
 if __FILE__ == $0
   $counter = 0
+  $not_inside_vim = true
   make_cache_folder_if_not_exists
   start = Time.new
   commit = `git rev-parse HEAD`.chomp
