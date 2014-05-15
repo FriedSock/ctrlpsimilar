@@ -9,7 +9,7 @@ def modded_files
 end
 
 def gen_similar_files
-  hash = `git rev-parse HEAD`.chomp
+  hash = `git rev-parse HEAD`.chomp[0..9]
   commit_matrix = retrieve_matrix hash
   files = []
   predictor = Predictor.new(observation, commit_matrix, SIMILARITY_TYPE)

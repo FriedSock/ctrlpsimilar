@@ -1,4 +1,5 @@
 require 'pathname.rb'
+require 'csv'
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 
 TEMP_FILENAME = '/tmp/commit_files'
@@ -45,7 +46,9 @@ def main_old
 end
 
 def build_matrix commit_hash
+  commit_hash = commit_hash[0..9]
   parents = `git rev-list --parents -n 1 #{commit_hash}`.split
+  parents.map! { |p| p[0..9] }
   return if retrieve_matrix commit_hash
   if parents.size > 3
     parents[1..-1].each do |p|

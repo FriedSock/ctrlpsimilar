@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), 'commit_matrix.rb')
 require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
-require File.join(File.dirname(__FILE__), 'third_party/Logistic-Regression/classifier.rb')
+require File.join(File.dirname(__FILE__), '../third_party/Logistic-Regression/classifier.rb')
 require File.join(File.dirname(__FILE__), 'matrix.rb')
 
 require 'csv'
@@ -37,7 +37,7 @@ end
 MAX_NUMBER_OF_IDENTICALISH_TRAINING_RESULTS = 40
 
 def test_measure similarity_type, using_classifier
-  commits = `git rev-list HEAD --topo-order --reverse -n 1000`.split("\n")
+  commits = `git rev-list HEAD --topo-order --reverse -n 1000`.split("\n").map { |c| c[0..9] }
   evaluated_commits = 0
   mse_sum = 0
   pos_evaluated_commits = 0
@@ -82,8 +82,8 @@ def test_measure similarity_type, using_classifier
                                   # [id,      yvalue, 1, xvalue]
       train_data = lambda { |point| [id+=1, point[1], 1, point[0]]}
       classifier = Classifier.new
-      #training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
-      training_set = last_prediction_hash
+      training_set = (similarity_results.reverse.select{|a| a[1] == 1 }.take(50) + similarity_results.reverse.select{|a| a[1] == 0 }.take(50)).shuffle
+      #training_set = last_prediction_hash
       classifier.set_train_data training_set.map{ |p| train_data.call p }
       classifier.train
     end
@@ -129,7 +129,7 @@ end
 
 if __FILE__ == $0
   measures = [:inner, :pearson, :cosine, :jaccard, :time_inner_prod, :time_pearson, :time_cosine]
-  [true].each do |using_classifier|
+  [false,true].each do |using_classifier|
     measures.each do |m|
       with_or_without = using_classifier ? "with" : "without"
       puts "Testing #{m} #{with_or_without} logisic regression"
