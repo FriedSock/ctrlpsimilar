@@ -4,21 +4,30 @@ require File.join(File.dirname(__FILE__), 'predictor.rb')
 
 SIMILARITY_TYPE = :time_cosine
 
+def modded_files
+  `cd "$(git rev-parse --show-toplevel)"; git ls-files --full-name -m`.split("\n")
+end
+
 def gen_similar_files
   hash = `git rev-parse HEAD`.chomp
   commit_matrix = retrieve_matrix hash
   files = []
   predictor = Predictor.new(observation, commit_matrix, SIMILARITY_TYPE)
-  all_files = `git ls-files --full-name`.split("\n")
+  full_names = `git ls-files --full-name`.split("\n")
+  short_names = `git ls-files`.split("\n")
+  full_names_to_short_names = Hash[full_names.zip short_names]
 
   files = predictor.predict.to_a
-  files = files.sort {|f1,f2| f2[1] <=> f1[1] }.map {|f| f.map(&:to_s).join(' ')}
+  files += modded_files.map { |f| [f,1]}
+  files.reject! { |file,v| !full_names.include?(file) }
+  files.map! { |file,v| [full_names_to_short_names[file], v]}
+  files.sort! {|f1,f2| f2[1] <=> f1[1] }.map! {|f| f.map(&:to_s).join(' ')}
+
   VIM::command("let s:ctrlp_similar_files = #{files.map { |f| stringify f} }")
 end
 
 def observation
   hash = {}
-  modded_files = `git ls-files --full-name -m`.split("\n")
   modded_files.each do |m|
     hash[m] = 1
   end

@@ -8,7 +8,7 @@ if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
 endif
 let g:loaded_ctrlp_similar = 1
 
-let var=system('git ls-files')
+let var = system('git ls-files')
 if v:shell_error !=0
   let s:no_git_repo = 1
 else
@@ -27,7 +27,6 @@ call add(g:ctrlp_ext_vars, {
 
 function! similar#init()
   ruby gen_similar_files
-  let s:buffer = ''
   return s:ctrlp_similar_files
 endfunction
 
@@ -78,7 +77,13 @@ function! SimilarWrapper()
     call ctrlp#init(0, { 'dir': '' })
     return
   endif
-  let s:buffer = expand('%')
+  let mod = system('cd "$(git rev-parse --show-toplevel)"; git ls-files --full-name -m')
+  if mod ==# ''
+    let s:no_modified = 1
+    echom 'No files have been modified, reverting to vanilla ctrlp'
+    call ctrlp#init(0, { 'dir': '' })
+    return
+  endif
   call ctrlp#init(similar#id())
 endfunction
 
