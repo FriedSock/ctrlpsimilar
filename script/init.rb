@@ -2,21 +2,13 @@ require File.join(File.dirname(__FILE__), 'array.rb')
 require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
 
-#def gen_similar_files
-#  files = files_from_item_item filename
-#  files = `git ls-files`.split("\n").map{ |file| [file, rand]}
-#  files = files.sort {|f1,f2| f2[1] <=> f1[1] }.map {|f| f.map(&:to_s).join(' ')}
-#  VIM::command("let s:ctrlp_similar_files = #{files.map { |f| stringify f} }")
-#end
 SIMILARITY_TYPE = :time_cosine
 
 def gen_similar_files
   hash = `git rev-parse HEAD`.chomp
   commit_matrix = retrieve_matrix hash
   files = []
-  puts 'p00'
   predictor = Predictor.new(observation, commit_matrix, SIMILARITY_TYPE)
-  puts 'w00'
   all_files = `git ls-files --full-name`.split("\n")
 
   files = predictor.predict.to_a
@@ -25,12 +17,6 @@ def gen_similar_files
 end
 
 def observation
-  #all_files = `git ls-files --full-name`.split("\n")
-  #hash = {}.tap do |h|
-  #  all_files.each do |filename|
-  #    h[filename] = 0
-  #  end
-  #end
   hash = {}
   modded_files = `git ls-files --full-name -m`.split("\n")
   modded_files.each do |m|

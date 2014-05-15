@@ -82,10 +82,5 @@ function! SimilarWrapper()
   call ctrlp#init(similar#id())
 endfunction
 
-function Do()
-  edit Readme.md
-endfunction
-nnoremap <leader>w :edit Readme.md<cr>
-
 " Create a command to directly call the new search type
 command! CtrlPSimilar call SimilarWrapper()
