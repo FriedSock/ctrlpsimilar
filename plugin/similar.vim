@@ -13,6 +13,7 @@ if v:shell_error !=0
   let s:no_git_repo = 1
 else
   ruby load File.join($dir, '../script/init.rb');
+  ruby load File.join($dir, '../script/logging.rb');
 endif
 
 call add(g:ctrlp_ext_vars, {
@@ -44,6 +45,7 @@ function! similar#accept(mode, str)
   call ctrlp#exit()
 	call similar#exit()
   call ctrlp#acceptfile(a:mode, str)
+  execute 'ruby log_action ''' . str . ''''
 endfunction
 
 
