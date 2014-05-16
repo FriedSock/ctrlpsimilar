@@ -36,9 +36,19 @@ def observation
   modded_files.each do |m|
     hash[m] = 1
   end
+  hash[focussed_file] = 1
   hash
 end
 
+def focussed_file
+  file = Vim::evaluate("s:focussed_file")
+  if file != ''
+    full_file = Vim::evaluate("s:full_name")
+    root_repo = `git rev-parse --show-toplevel`.chomp + '/'
+    full_file.slice! root_repo
+    return full_file
+  end
+end
 
 def filename
   VIM::evaluate('s:buffer')

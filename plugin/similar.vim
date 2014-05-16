@@ -24,10 +24,27 @@ call add(g:ctrlp_ext_vars, {
 	\ 'exit': 'similar#exit()',
 	\ 'sort': 0,
 	\ })
+"
 
+function! similar#open_files()
+  redir => var
+  silent buffers
+  redir END
+  return map(filter(map(split(var, '\n'), 'split(v:val)'), 'v:val[1] ==# ''%a'' || v:val[1] ==# ''a'''), 'substitute(join(v:val[2:-3]), ''"'', '''', ''g'')')
+endfunction
+
+function! similar#focussed_file()
+  redir => var
+  silent buffers
+  redir END
+  let focussed_file = map(filter(map(split(var, '\n'), 'split(v:val)'), 'v:val[1] ==# ''%a'''), 'substitute(join(v:val[2:-3]), ''"'', '''', ''g'')')
+  return len(focussed_file) ? focussed_file[0] : ''
+endfunction
 
 function! similar#init()
   ruby gen_similar_files
+  let open_files = similar#open_files()
+  call filter(s:ctrlp_similar_files, 'index(open_files, split(v:val)[0]) < 0')
   return s:ctrlp_similar_files
 endfunction
 
@@ -48,22 +65,8 @@ function! similar#accept(mode, str)
   execute 'ruby log_action ''' . str . ''''
 endfunction
 
-
-" (optional) Do something before enterting ctrlp
-function! similar#enter()
-endfunction
-
-
-" (optional) Do something after exiting ctrlp
 function! similar#exit()
-  "Todo -- Logging
 endfunction
-
-
-" (optional) Set or check for user options specific to this extension
-function! similar#opts()
-endfunction
-
 
 " Give the extension an ID
 let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
@@ -86,6 +89,8 @@ function! SimilarWrapper()
     call ctrlp#init(0, { 'dir': '' })
     return
   endif
+  let s:focussed_file = similar#focussed_file()
+  let s:full_name = expand('%:p')
   call ctrlp#init(similar#id())
 endfunction
 
