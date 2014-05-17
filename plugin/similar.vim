@@ -22,7 +22,6 @@ call add(g:ctrlp_ext_vars, {
 	\ 'accept': 'similar#accept',
 	\ 'lname': 'ctrlp-similar',
 	\ 'type': 'line',
-	\ 'exit': 'similar#exit()',
 	\ 'sort': 0,
 	\ })
 "
@@ -61,12 +60,8 @@ function! similar#accept(mode, str)
 	" For this example, just exit ctrlp and run help
   let str = split(a:str)[0]
   call ctrlp#exit()
-	call similar#exit()
   call ctrlp#acceptfile(a:mode, str)
   execute 'ruby log_action ''' . str . ''''
-endfunction
-
-function! similar#exit()
 endfunction
 
 " Give the extension an ID
@@ -80,11 +75,16 @@ endfunction
 function! SimilarWrapper()
   if (!exists('s:repo_is_initialized') || !s:repo_is_initialized)
     echom 'Repo not initialized, reverting to vanilla ctrlp'
+    call ctrlp#init(0, { 'dir': '' })
+    return
   endif
 
   ruby determine_if_matrix_has_been_built
+
   if  (!s:matrix_built)
     echom 'Model for current revision not ready yet, reverting to vanilla ctrlp'
+    call ctrlp#init(0, { 'dir': '' })
+    return
   endif
 
   if ( exists('s:no_git_repo') && s:no_git_repo )
