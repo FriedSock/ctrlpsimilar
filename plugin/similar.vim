@@ -82,15 +82,18 @@ function! SimilarWrapper()
     call ctrlp#init(0, { 'dir': '' })
     return
   endif
+
   let mod = system('cd "$(git rev-parse --show-toplevel)"; git ls-files --full-name -m')
-  if mod ==# ''
+  let s:focussed_file = similar#focussed_file()
+  let s:full_name = expand('%:p')
+  call system('git blame ' . s:full_name)
+
+  if mod ==# '' && (s:focussed_file ==# '' || v:shell_error != 0)
     let s:no_modified = 1
     echom 'No files have been modified, reverting to vanilla ctrlp'
     call ctrlp#init(0, { 'dir': '' })
     return
   endif
-  let s:focussed_file = similar#focussed_file()
-  let s:full_name = expand('%:p')
   call ctrlp#init(similar#id())
 endfunction
 
