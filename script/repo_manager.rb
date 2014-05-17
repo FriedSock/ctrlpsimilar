@@ -25,7 +25,7 @@ module RepoManager
   end
 
   def current_hash
-    `git rev-parse HEAD`.chomp
+    `git rev-parse HEAD`.chomp[0..9]
   end
 
   extend self
@@ -50,6 +50,6 @@ def determine_if_matrix_has_been_built
 end
 
 def update_model_if_needed
-  fork { build_matrix `git rev-parse HEAD`.chomp }
+  fork { build_matrix `git rev-parse HEAD`.chomp[0..9] }
 end
 
