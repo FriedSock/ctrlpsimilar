@@ -11,11 +11,7 @@ end
 def gen_similar_files
   hash = `git rev-parse HEAD`.chomp[0..9]
   commit_matrix = retrieve_matrix hash
-  if !commit_matrix
-    make_cache_folder_if_not_exists
-    build_matrix hash
-    commit_matrix = retrieve_matrix hash
-  end
+
   files = []
   predictor = Predictor.new(observation, commit_matrix, SIMILARITY_TYPE)
   full_names = `git ls-files --full-name`.split("\n")
