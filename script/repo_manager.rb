@@ -18,9 +18,11 @@ module RepoManager
 
   def remove_repo_if_exists path
     return unless repo_is_initialized? path
-    list_without_repo = File.open(LIST_FILE_PATH, "rb+").read.gsub(path, '')
+    list_without_repo = File.open(LIST_FILE_PATH, "rb+").read.split("\n").reject { |f| f == path }
     File.open(LIST_FILE_PATH, 'w') do |f|
-      f << list_without_repo
+      list_without_repo.each do |repo_path|
+        f << repo_path + "\n"
+      end
     end
   end
 
