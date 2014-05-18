@@ -1,0 +1,18 @@
+#!/bin/sh
+
+#Copy me to the .git/hooks directory of your ctrlp-similar enabled git project.
+#remember to set the correct permissions on the file using chmod u+x
+
+set -e
+
+function main {
+  read x;
+  remove_invalid_hash $(echo $x | cut -d ' ' -f 1);
+}
+
+function remove_invalid_hash () {
+  rm -f "$(pwd)/.ctrlp-similar/${1:0:10}"
+}
+
+main
+
