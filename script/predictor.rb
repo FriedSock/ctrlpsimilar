@@ -145,7 +145,7 @@ class Predictor
   def time_weight_inner_prod file1, file2
     vec1 = @commit_matrix.file file1
     vec2 = @commit_matrix.file file2
-    ((vec1 & vec2).map {|v| weighted_rows[v]}+[0]).reduce(:+)
+    ((vec1 & vec2).map {|v| weighted_rows[v] ** 2}+[0]).reduce(:+)
   end
 
   def size file
