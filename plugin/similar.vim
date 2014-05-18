@@ -110,6 +110,13 @@ endfunction
 
 function! similar#add_repo()
   ruby add_repo
+  call similar#determine_if_repo_is_initialized()
+  call similar#update_model_if_needed()
+endfunction
+
+function! similar#remove_repo()
+  ruby remove_repo
+  call similar#determine_if_repo_is_initialized()
 endfunction
 
 function! similar#determine_if_repo_is_initialized()
@@ -131,3 +138,4 @@ augroup END
 " Create a command to directly call the new search type
 command! CtrlPSimilar call SimilarWrapper()
 command! AddCtrlPSimilarRepo call similar#add_repo()
+command! DelCtrlPSimilarRepo call similar#remove_repo()

@@ -16,6 +16,14 @@ module RepoManager
     end
   end
 
+  def remove_repo_if_exists path
+    return unless repo_is_initialized? path
+    list_without_repo = File.open(LIST_FILE_PATH, "rb+").read.gsub(path, '')
+    File.open(LIST_FILE_PATH, 'w') do |f|
+      f << list_without_repo
+    end
+  end
+
   def repo_is_initialized? path
     repo_list.include? path
   end
@@ -41,6 +49,11 @@ def add_repo
   RepoManager.add_repo_if_not_already repo_name
 end
 
+def remove_repo
+  RepoManager.remove_repo_if_exists repo_name
+  `rm -rf #{repo_name}/.ctrlp-similar`
+end
+
 def determine_if_repo_is_initialized
   VIM::command("let s:repo_is_initialized = #{RepoManager.repo_is_initialized?(repo_name) ? 1 : 0}")
 end
@@ -50,6 +63,7 @@ def determine_if_matrix_has_been_built
 end
 
 def update_model_if_needed
+  `mkdir -p #{repo_name}/.ctrlp-similar`
   fork { build_matrix `git rev-parse HEAD`.chomp[0..9] }
 end
 
