@@ -156,7 +156,8 @@ class Predictor
     @_rows ||= {}.tap do |hash|
       size = @commit_matrix.ordered_rows.size.to_f
       @commit_matrix.ordered_rows.each_with_index do |row,index|
-        hash[row] = (index+1) / size
+        hash[row] = (index+1) / size.to_f
+        #hash[row] = 0.5 ** (((index+1)*4)/size.to_f)
       end
     end
   end
