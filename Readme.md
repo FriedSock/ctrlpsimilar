@@ -10,18 +10,27 @@ After that is done, it is also recommended that you install this plugin using Vu
 If you don't use either of those, simply clone the repository
 
 	git clone http://github.com/FriedSock/ctrlp-similar.git ~/.vim/bundle/ctrlp-similar
-	
+
 And add the directory to your runtime path by adding this line to your .vimrc file
 
 	set rtp+=~/.vim/bundle/ctrlp-similar
-	
-	
+
+#Setup
+
+The tool requires set up on a per-repository basis. This means if you
+want to use it for a particular repository, you should run the command
+`:AddCtrlPSimilarRepo`. Depending on the size of your project history,
+it may take a few minutes until you are able to use the predictions.
+
+Until then (and for any other reasons why predicitons cannot be made)
+the `:CtrlPSimilar` command will fall back to the default `:CtrlP`
+
 #Usage
 
-By defuault, opening ctrlp-similar is bound to  `<c-s>` (ctrl + s). If you want to rebind this you can add a new mapping to your `.vimrc` file.
+By default, opening ctrlp-similar is bound to  `<c-s>` (ctrl + s). If you want to rebind this you can add a new mapping to your `.vimrc` file.
 
 	nnoremap <leader>s :CtrlPSimilar<cr>
-	
+
 #Requirements
 Your version of Vim must be compiled with the `+ruby` option. The plugin depends on your system ruby version, and has been tested on 1.8.7, 1.9.3, and 2.0.0. If you find that you have a different ruby version I would be happy to look into expanding support.
-	
+
