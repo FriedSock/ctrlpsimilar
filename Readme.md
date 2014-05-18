@@ -33,15 +33,20 @@ If you rewrite the git history at any point, via rebasing or `commit --amend`; t
 To automatically have these files deleted, it is recommended you add a post-rewrite commit hook. A fixture to accomplish this is provided, but will need to be added on a per-repository basis. To do so, run:
 
 	cp ~/.vim/bundle/ctrlp-similar/fixtures/post_rewrite the/path/to/your/repo/.git/hooks/post_rewrite
-	
+
 	chmod u+x the/path/to/your/repo.git/hooks/post_rewrite
-	
+
 
 #Usage
+
+![alt tag](https://raw.github.com/FriedSock/ctrlp-similar/master/gifs/usingsimilar.gif)
 
 By default, opening ctrlp-similar is bound to  `<c-s>` (ctrl + s). If you want to rebind this you can add a new mapping to your `.vimrc` file.
 
 	nnoremap <leader>s :CtrlPSimilar<cr>
+
+Selecting a file from the list is done the same way as in ctrlp, in the
+above gif: <enter> is used (to open the tile in the current window).
 
 #Requirements
 Your version of Vim must be compiled with the `+ruby` option. The plugin depends on your system ruby version, and has been tested on 1.8.7, 1.9.3, and 2.0.0. If you find that you have a different ruby version I would be happy to look into expanding support.
