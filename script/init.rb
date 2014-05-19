@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'array.rb')
 require File.join(File.dirname(__FILE__), 'item_item.rb')
 require File.join(File.dirname(__FILE__), 'predictor.rb')
 
-SIMILARITY_TYPE = :time_cosine
+SIMILARITY_TYPE = :time_cosine unless defined? SIMILARITY_TYPE
 
 def modded_files
   `cd "$(git rev-parse --show-toplevel)"; git ls-files --full-name -m`.split("\n")

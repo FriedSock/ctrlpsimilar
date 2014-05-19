@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'item_item.rb')
 
 module RepoManager
 
-  LIST_FILE_PATH = File.join(File.dirname(__FILE__), '../.repos')
+  LIST_FILE_PATH = File.join(File.dirname(__FILE__), '../.repos') unless defined? LIST_FILE_PATH
 
   def repo_list
     `touch #{LIST_FILE_PATH}`

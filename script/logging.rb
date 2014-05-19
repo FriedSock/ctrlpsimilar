@@ -1,5 +1,5 @@
 
-LOG_PATH = '~/.vim/bundle/ctrlp-similar/.logfile'
+LOG_PATH = '~/.vim/bundle/ctrlp-similar/.logfile' unless defined? LOG_PATH
 
 def log_action str
   sim_files = Vim::evaluate('s:ctrlp_similar_files')
