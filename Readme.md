@@ -2,6 +2,11 @@
 #About
 ctrlp-similar is an extension for [ctrlp](http://github.com/kien/ctrlp.vim) that helps recommend files for you to open, based on the status and history of your git repository.
 
+Instead of ordering files in your search lexicographically,
+ctrlp-similar orders files based on the file you have open and files
+recently modified. Each file is accompanied with an accompanying
+similarity value to the current commit mod-set. (Scroll down for usage
+gif)
 #Installation instructions:
 This is an extension to the [ctrlp](http://github.com/kien/ctrlp.vim) plugin, it is required that you install it first. It is recommended that you use a plugin manager like [Vundle](http://github.com/gmarik/Vundle.vim) or [Pathogen](http://github.com/tpope/vim-pathogen/). Otherwise, follow the installation insructions on the github page.
 
