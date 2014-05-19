@@ -58,7 +58,7 @@ endfunction
 "
 function! similar#accept(mode, str)
 	" For this example, just exit ctrlp and run help
-  let str = split(a:str)[0]
+  let str = split(a:str, '\t')[0]
   call ctrlp#exit()
   call ctrlp#acceptfile(a:mode, str)
   execute 'ruby log_action ''' . str . ''''

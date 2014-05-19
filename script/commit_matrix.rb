@@ -64,7 +64,7 @@ class CommitMatrix
   end
 
   def handle_file file
-    words = file.split
+    words = file.split("\t")
     if words.first =~ /^M|T.*/
       add_one_value_to words.last
     elsif words.first =~ /^A.*/
@@ -89,7 +89,7 @@ class CommitMatrix
     matrix1.commit_hash = commit_hash
 
     diff.split("\n").each do |file|
-      words = file.split
+      words = file.split("\t")
       if words.first =~ /^R.*/
         matrix1.rename_file words[-2], words[-1]
         parent_set_union = Set.new

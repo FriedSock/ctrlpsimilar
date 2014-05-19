@@ -22,7 +22,7 @@ def gen_similar_files
   files += modded_files.map { |f| [f,1]}
   files.reject! { |file,v| !full_names.include?(file) }
   files.map! { |file,v| [full_names_to_short_names[file], v]}
-  files.sort! {|f1,f2| f2[1] <=> f1[1] }.map! {|f| f.map(&:to_s).join(' ')}
+  files.sort! {|f1,f2| f2[1] <=> f1[1] }.map! {|f| f.map(&:to_s).join("\t")}
 
   VIM::command("let s:ctrlp_similar_files = #{files.map { |f| stringify f} }")
 end
