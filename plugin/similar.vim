@@ -8,14 +8,17 @@ if ( exists('g:loaded_ctrlp_similar') && g:loaded_ctrlp_similar )
 endif
 let g:loaded_ctrlp_similar = 1
 
-let var = system('git ls-files')
-if v:shell_error !=0
-  let s:no_git_repo = 1
-else
-  ruby load File.join($dir, '../script/init.rb');
-  ruby load File.join($dir, '../script/logging.rb');
-  ruby load File.join($dir, '../script/repo_manager.rb');
-endif
+function similar#determine_if_git_repo()
+  let var = system('git ls-files')
+  if v:shell_error !=0
+    let s:no_git_repo = 1
+  else
+    let s:no_git_repo = 0
+    ruby load File.join($dir, '../script/init.rb');
+    ruby load File.join($dir, '../script/logging.rb');
+    ruby load File.join($dir, '../script/repo_manager.rb');
+  endif
+endfunction
 
 call add(g:ctrlp_ext_vars, {
 	\ 'init': 'similar#init()',
@@ -73,6 +76,8 @@ function! similar#id()
 endfunction
 
 function! SimilarWrapper()
+  call similar#determine_if_repo_is_initialized()
+
   if (!exists('s:repo_is_initialized') || !s:repo_is_initialized)
     echom 'Repo not initialized, reverting to vanilla ctrlp'
     call ctrlp#init(0, { 'dir': '' })
@@ -109,6 +114,8 @@ function! SimilarWrapper()
 endfunction
 
 function! similar#add_repo()
+  call similar#determine_if_git_repo()
+
   if (!(exists('s:no_git_repo') && s:no_git_repo))
     ruby add_repo
     call similar#determine_if_repo_is_initialized()
@@ -119,6 +126,8 @@ function! similar#add_repo()
 endfunction
 
 function! similar#remove_repo()
+  call similar#determine_if_git_repo()
+
   if (!(exists('s:no_git_repo') && s:no_git_repo))
     ruby remove_repo
     call similar#determine_if_repo_is_initialized()
@@ -128,6 +137,8 @@ function! similar#remove_repo()
 endfunction
 
 function! similar#determine_if_repo_is_initialized()
+  call similar#determine_if_git_repo()
+
   if (!(exists('s:no_git_repo') && s:no_git_repo))
     ruby determine_if_repo_is_initialized
   else
