@@ -109,14 +109,22 @@ function! SimilarWrapper()
 endfunction
 
 function! similar#add_repo()
-  ruby add_repo
-  call similar#determine_if_repo_is_initialized()
-  call similar#update_model_if_needed()
+  if (!(exists('s:no_git_repo') && s:no_git_repo))
+    ruby add_repo
+    call similar#determine_if_repo_is_initialized()
+    call similar#update_model_if_needed()
+  else
+    echom 'You have not launched Vim inside a git repository!'
+  endif
 endfunction
 
 function! similar#remove_repo()
-  ruby remove_repo
-  call similar#determine_if_repo_is_initialized()
+  if (!(exists('s:no_git_repo') && s:no_git_repo))
+    ruby remove_repo
+    call similar#determine_if_repo_is_initialized()
+  else
+    echom 'You have not launched Vim inside a git repository!'
+  endif
 endfunction
 
 function! similar#determine_if_repo_is_initialized()
