@@ -120,7 +120,11 @@ function! similar#remove_repo()
 endfunction
 
 function! similar#determine_if_repo_is_initialized()
-  ruby determine_if_repo_is_initialized
+  if (!s:no_git_repo)
+    ruby determine_if_repo_is_initialized
+  else
+    let s:repo_is_initialized = 0
+  endif
 endfunction
 
 function! similar#update_model_if_needed()
