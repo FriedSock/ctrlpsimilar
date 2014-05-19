@@ -56,6 +56,9 @@ above gif: <enter> is used (to open the tile in the current window).
 #Requirements
 Your version of Vim must be compiled with the `+ruby` option. The plugin depends on your system ruby version, and has been tested on 1.8.7, 1.9.3, and 2.0.0. If you find that you have a different ruby version I would be happy to look into expanding support.
 
+#Support
+If you have any further questions, contact me at jbtwentythree'at'gmail.com (replace 'at' with @) and I will get back to you ASAP.
+
 #Disclaimer
 
 I am running a user study on this plugin, thus this plugin has a logfile which records information every time you accept a suggestion. The file will stay on your machine unless you choose to send it to someone(me). The file contains no specific information about the code being worked on, I encourage you to look at its contents at `~/.vim/bundle/ctrlp-similar/.logfile` if you have any concerns.
