@@ -76,7 +76,7 @@ function! similar#id()
 endfunction
 
 function! SimilarWrapper()
-  call similar#determine_if_repo_is_initialized()
+  call similar#update_model_if_needed_and_initialized()
 
   if (!exists('s:repo_is_initialized') || !s:repo_is_initialized)
     echom 'Repo not initialized, reverting to vanilla ctrlp'
@@ -154,9 +154,14 @@ endfunction
 
 augroup ctrlpsimilarinit
   autocmd!
-  au VimEnter * :call similar#determine_if_repo_is_initialized()
-  au VimEnter * :call similar#update_model_if_needed()
+  au VimEnter * :call similar#update_model_if_needed_and_initialized()
+  au BufEnter * :call similar#update_model_if_needed_and_initialized()
 augroup END
+
+function! similar#update_model_if_needed_and_initialized()
+  call similar#determine_if_repo_is_initialized()
+  call similar#update_model_if_needed()
+endfunction
 
 " Create a command to directly call the new search type
 command! CtrlPSimilar call SimilarWrapper()
