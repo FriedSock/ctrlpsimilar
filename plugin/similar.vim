@@ -74,7 +74,12 @@ function! similar#accept(mode, str)
 endfunction
 
 " Give the extension an ID
-let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
+if exists('g:ctrlp_builtins')
+  let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
+else
+  let g:ctrlp_builtins = 2
+  let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
+endif
 
 " Allow it to be called later
 function! similar#id()
