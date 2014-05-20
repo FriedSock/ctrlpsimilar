@@ -16,9 +16,14 @@ If you don't use either of those, simply clone the repository
 
 	git clone http://github.com/FriedSock/ctrlpsimilar.git ~/.vim/bundle/ctrlpsimilar
 
-And add the directory to your runtime path by adding this line to your .vimrc file
+And add the directory to your runtime path by adding this line to your `.vimrc` file in such a way that it comes after the `ctrlp.vim` installation directory
 
 	set rtp+=~/.vim/bundle/ctrlpsimilar
+
+You can name the installation directory anything you like, but if you
+are using pathogen, it is crucial that the directory name is
+lexicographically greater than `ctrlp.vim` (such as `ctrlpsimilar`) to ensure it comes second in
+the runtime path.
 
 #Setup
 
