@@ -9,8 +9,14 @@ endif
 let g:loaded_ctrlp_similar = 1
 
 function similar#determine_if_git_repo()
-  let var = system('git ls-files')
-  if v:shell_error !=0
+  silent ruby system("git ls-files &> /dev/null")
+  silent ruby Vim::command('let s:git_repo = 1') if $? == 0
+
+  if !(exists('s:git_repo') && s:git_repo)
+    let s:git_repo = 0
+  endif
+
+  if s:git_repo == 0
     let s:no_git_repo = 1
   else
     let s:no_git_repo = 0
