@@ -1,9 +1,9 @@
 
 #About
-ctrlp-similar is an extension for [ctrlp](http://github.com/kien/ctrlp.vim) that helps recommend files for you to open, based on the status and history of your git repository.
+ctrlpsimilar is an extension for [ctrlp](http://github.com/kien/ctrlp.vim) that helps recommend files for you to open, based on the status and history of your git repository.
 
 Instead of ordering files in your search lexicographically,
-ctrlp-similar orders files based on the file you have open and files
+ctrlpsimilar orders files based on the file you have open and files
 recently modified. Each file is accompanied with an accompanying
 similarity value to the current commit mod-set. (Scroll down for usage
 gif)
@@ -14,11 +14,11 @@ After that is done, it is also recommended that you install this plugin using Vu
 
 If you don't use either of those, simply clone the repository
 
-	git clone http://github.com/FriedSock/ctrlp-similar.git ~/.vim/bundle/ctrlp-similar
+	git clone http://github.com/FriedSock/ctrlpsimilar.git ~/.vim/bundle/ctrlpsimilar
 
 And add the directory to your runtime path by adding this line to your .vimrc file
 
-	set rtp+=~/.vim/bundle/ctrlp-similar
+	set rtp+=~/.vim/bundle/ctrlpsimilar
 
 #Setup
 
@@ -37,16 +37,16 @@ If you rewrite the git history at any point, via rebasing or `commit --amend`; t
 
 To automatically have these files deleted, it is recommended you add a post-rewrite commit hook. A fixture to accomplish this is provided, but will need to be added on a per-repository basis. To do so, run:
 
-	cp ~/.vim/bundle/ctrlp-similar/fixtures/post_rewrite the/path/to/your/repo/.git/hooks/post_rewrite
+	cp ~/.vim/bundle/ctrlpsimilar/fixtures/post_rewrite the/path/to/your/repo/.git/hooks/post_rewrite
 
 	chmod u+x the/path/to/your/repo.git/hooks/post_rewrite
 
 
 #Usage
 
-![alt tag](https://raw.github.com/FriedSock/ctrlp-similar/master/gifs/usingsimilar.gif)
+![alt tag](https://raw.github.com/FriedSock/ctrlpsimilar/master/gifs/usingsimilar.gif)
 
-By default, opening ctrlp-similar is bound to  `<c-s>` (ctrl + s). If you want to rebind this you can add a new mapping to your `.vimrc` file.
+By default, opening ctrlpsimilar is bound to  `<c-s>` (ctrl + s). If you want to rebind this you can add a new mapping to your `.vimrc` file.
 
 	nnoremap <leader>s :CtrlPSimilar<cr>
 
@@ -61,5 +61,5 @@ If you have any further questions, contact me at jbtwentythree'at'gmail.com (rep
 
 #Disclaimer
 
-I am running a user study on this plugin, thus this plugin has a logfile which records information every time you accept a suggestion. The file will stay on your machine unless you choose to send it to someone(me). The file contains no specific information about the code being worked on, I encourage you to look at its contents at `~/.vim/bundle/ctrlp-similar/.logfile` if you have any concerns.
+I am running a user study on this plugin, thus this plugin has a logfile which records information every time you accept a suggestion. The file will stay on your machine unless you choose to send it to someone(me). The file contains no specific information about the code being worked on, I encourage you to look at its contents at `~/.vim/bundle/ctrlpsimilar/.logfile` if you have any concerns.
 
