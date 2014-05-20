@@ -20,13 +20,19 @@ function similar#determine_if_git_repo()
   endif
 endfunction
 
-call add(g:ctrlp_ext_vars, {
+let s:ext_vars = {
 	\ 'init': 'similar#init()',
 	\ 'accept': 'similar#accept',
 	\ 'lname': 'ctrlp-similar',
 	\ 'type': 'line',
 	\ 'sort': 0,
-	\ })
+	\ }
+
+if exists('g:ctrlp_ext_vars') && !empty(g:ctrlp_ext_vars)
+    call add(g:ctrlp_ext_vars, s:ext_vars)
+  else
+    let g:ctrlp_ext_vars = [s:ext_vars]
+endif
 "
 
 function! similar#open_files()
