@@ -24,6 +24,9 @@ def gen_similar_files
   files.map! { |file,v| [full_names_to_short_names[file], v]}
   files.sort! {|f1,f2| f2[1] <=> f1[1] }.map! {|f| f.map(&:to_s).join("\t")}
 
+  untracked_files = `git ls-files --others --exclude-standard | grep -v '.ctrlp-similar'`.split("\n").map{|file| "#{file}\t#{0.to_f}"}
+  files += untracked_files
+
   VIM::command("let s:ctrlp_similar_files = #{files.map { |f| stringify f} }")
 end
 
