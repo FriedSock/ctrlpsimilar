@@ -8,7 +8,7 @@ recently modified. Each file is accompanied with an accompanying
 similarity value to the current commit mod-set. (Scroll down for usage
 gif)
 #Installation instructions:
-This is an extension to the [ctrlp](http://github.com/kien/ctrlp.vim) plugin, it is required that you install it first. It is recommended that you use a plugin manager like [Vundle](http://github.com/gmarik/Vundle.vim) or [Pathogen](http://github.com/tpope/vim-pathogen/). Otherwise, follow the installation insructions on the github page.
+This is an extension to the [ctrlp](http://github.com/kien/ctrlp.vim) plugin, it is required that you install it first. It is recommended that you use a plugin manager like [Vundle](http://github.com/gmarik/Vundle.vim) or [Pathogen](http://github.com/tpope/vim-pathogen/). Otherwise, follow the installation instructions on the github page.
 
 After that is done, it is also recommended that you install this plugin using Vundle/Pathogen.
 
@@ -35,7 +35,7 @@ it may take a few minutes until you are able to use the predictions.
 Until then (and for any other reasons why predicitons cannot be made)
 the `:CtrlPSimilar` command will fall back to the default `:CtrlP`
 
-Similary, to disable CtrlPSimilar for a particular repo, just run `:DelCtrlPSimilarRepo`
+Similarly, to disable CtrlPSimilar for a particular repo, just run `:DelCtrlPSimilarRepo`
 
 ##Git hooks
 If you rewrite the git history at any point, via rebasing or `commit --amend`; there will be some files representing commits that are no longer valid (files affected by history rewriting are given new hashes). While this is not a huge problem, the files are no longer needed and are just taking up extra space.
@@ -57,6 +57,8 @@ By default, opening ctrlpsimilar is bound to  `<c-s>` (ctrl + s). If you want to
 
 Selecting a file from the list is done the same way as in ctrlp, in the
 above gif: <enter> is used (to open the tile in the current window).
+
+Whichever old mapping existed for `:CtrlP` will also be overwritten.
 
 #Requirements
 Your version of Vim must be compiled with the `+ruby` option. The plugin depends on your system ruby version, and has been tested on 1.8.7, 1.9.3, and 2.0.0. If you find that you have a different ruby version I would be happy to look into expanding support.
