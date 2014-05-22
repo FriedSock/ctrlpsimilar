@@ -182,5 +182,6 @@ endfunction
 
 " Create a command to directly call the new search type
 command! CtrlPSimilar call SimilarWrapper()
+command! CtrlP call SimilarWrapper()
 command! AddCtrlPSimilarRepo call similar#add_repo()
 command! DelCtrlPSimilarRepo call similar#remove_repo()
