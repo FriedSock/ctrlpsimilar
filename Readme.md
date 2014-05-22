@@ -44,7 +44,7 @@ To automatically have these files deleted, it is recommended you add a post-rewr
 
 	cp ~/.vim/bundle/ctrlpsimilar/fixtures/post_rewrite the/path/to/your/repo/.git/hooks/post_rewrite
 
-	chmod u+x the/path/to/your/repo.git/hooks/post_rewrite
+	chmod u+x the/path/to/your/repo/.git/hooks/post_rewrite
 
 
 #Usage
