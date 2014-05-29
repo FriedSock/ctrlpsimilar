@@ -87,7 +87,6 @@ else
   let s:id = g:ctrlp_builtins + len(g:ctrlp_ext_vars)
 endif
 
-" Allow it to be called later
 function! similar#id()
 	return s:id
 endfunction

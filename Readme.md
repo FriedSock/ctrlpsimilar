@@ -1,3 +1,7 @@
+I am running a user study for this plugin. If you end up using it, could
+you take 5 minutes to fill out this
+[survey](https://www.surveymonkey.com/s/LN8XDRV) (after a few days
+usage); I'd be very grateful.
 
 #About
 ctrlpsimilar is an extension for [ctrlp](http://github.com/kien/ctrlp.vim) that helps recommend files for you to open, based on the status and history of your git repository.
