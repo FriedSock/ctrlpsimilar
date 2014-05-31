@@ -39,22 +39,17 @@ def observation
   hash
 end
 
-def class_exists?(class_name)
-    klass = Module.const_get(class_name)
-      return klass.is_a?(Class)
-rescue NameError
-    return false
-end
 
 def focussed_file
-  return nil if !class_exists? 'Vim'
-  file = Vim::evaluate("s:focussed_file")
+  file = VIM::evaluate("s:focussed_file")
   if file != ''
-    full_file = Vim::evaluate("s:full_name")
+    full_file = VIM::evaluate("s:full_name")
     root_repo = `git rev-parse --show-toplevel`.chomp + '/'
     full_file.slice! root_repo
     return full_file
   end
+  rescue NameError
+    return nil
 end
 
 def stringify string
