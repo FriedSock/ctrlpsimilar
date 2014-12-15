@@ -149,7 +149,7 @@ class CommitMatrix
   end
 
   def ordered_rows
-    @_ordered_rows ||= `git rev-list --topo-order --reverse #{@commit_hash}`.split.map { |hsh| hsh[0..9] }
+    @_ordered_rows ||= `git rev-list --topo-order --reverse #{@commit_hash}`.split.map { |hsh| hsh[0..9] }.compact
   end
 
 end
